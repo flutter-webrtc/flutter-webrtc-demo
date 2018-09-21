@@ -286,11 +286,11 @@ class Signaling {
       });
     };
 
-    pc.onAddStream = ((stream) {
+    pc.onAddStream = (stream) {
       if(this.onAddRemoteStream != null)
         this.onAddRemoteStream(stream);
       //_remoteStreams.add(stream);
-    });
+    };
 
     pc.onRemoveStream = (stream) {
       if(this.onRemoveRemoteStream != null)
