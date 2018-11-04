@@ -19,7 +19,7 @@ enum DialogDemoAction {
 
 class _MyAppState extends State<MyApp> {
   List<RouteItem> items;
-  String _serverAddress = '192.168.31.152';
+  String _serverAddress = '';
   SharedPreferences prefs;
 
   @override
@@ -60,7 +60,7 @@ class _MyAppState extends State<MyApp> {
   _initData() async {
     prefs = await SharedPreferences.getInstance();
     setState(() {
-      _serverAddress = prefs.getString('server') ?? '';
+      _serverAddress = prefs.getString('server') ?? 'demo.cloudwebrtc.com';
     });
   }
 
