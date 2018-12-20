@@ -20,7 +20,7 @@ class _CallSampleState extends State<CallSample> {
   String _displayName =
       Platform.localHostname + '(' + Platform.operatingSystem + ")";
   List<dynamic> _peers;
-  var _self_id;
+  var _selfId;
   RTCVideoRenderer _localRenderer = new RTCVideoRenderer();
   RTCVideoRenderer _remoteRenderer = new RTCVideoRenderer();
   bool _inCalling = false;
@@ -67,7 +67,6 @@ class _CallSampleState extends State<CallSample> {
             break;
           case SignalingState.CallStateInvite:
           case SignalingState.CallStateConnected:
-          case SignalingState.CallStateInvite:
           case SignalingState.CallStateRinging:
           case SignalingState.ConnectionClosed:
           case SignalingState.ConnectionError:
@@ -78,7 +77,7 @@ class _CallSampleState extends State<CallSample> {
 
       _signaling.onPeersUpdate = ((event) {
         this.setState(() {
-          _self_id = event['self'];
+          _selfId = event['self'];
           _peers = event['peers'];
         });
       });
@@ -98,7 +97,7 @@ class _CallSampleState extends State<CallSample> {
   }
 
   _invitePeer(context, peerId) async {
-    if (_signaling != null && peerId != _self_id) {
+    if (_signaling != null && peerId != _selfId) {
       _signaling.invite(peerId, 'video');
     }
   }
@@ -110,7 +109,7 @@ class _CallSampleState extends State<CallSample> {
   }
 
   _buildRow(context, peer) {
-    var self = (peer['id'] == _self_id);
+    var self = (peer['id'] == _selfId);
     return ListBody(children: <Widget>[
       ListTile(
         title: Text(self

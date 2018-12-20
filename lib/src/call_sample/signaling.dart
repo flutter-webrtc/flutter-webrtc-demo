@@ -16,7 +16,7 @@ enum SignalingState {
 }
 
 /*
- * 回调类型定义.
+ * callbacks for Signaling API.
  */
 typedef void SignalingStateCallback(SignalingState state);
 typedef void StreamStateCallback(MediaStream stream);
@@ -24,14 +24,13 @@ typedef void OtherEventCallback(dynamic event);
 typedef void DataChannelMessageCallback(RTCDataChannel dc, data);
 
 class Signaling {
-  String _self_id = randomNumeric(6);
+  String _selfId = randomNumeric(6);
   var _socket;
-  var _session_id;
+  var _sessionId;
   var _url;
   var _name;
   var _peerConnections = new Map<String, RTCPeerConnection>();
   var _daChannels = new Map<int, RTCDataChannel>();
-  Timer _timer;
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
   SignalingStateCallback onStateChange;
@@ -79,7 +78,7 @@ class Signaling {
   }
 
   void invite(String peer_id, String media) {
-    this._session_id = this._self_id + '-' + peer_id;
+    this._sessionId = this._selfId + '-' + peer_id;
 
     if (this.onStateChange != null) {
       this.onStateChange(SignalingState.CallStateNew);
@@ -93,8 +92,8 @@ class Signaling {
 
   void bye() {
     _send('bye', {
-      'session_id': this._session_id,
-      'from': this._self_id,
+      'session_id': this._sessionId,
+      'from': this._selfId,
     });
   }
 
@@ -109,7 +108,7 @@ class Signaling {
           List<dynamic> peers = data;
           if(this.onPeersUpdate != null) {
             Map<String, dynamic> event = new  Map<String, dynamic>();
-            event['self'] = _self_id;
+            event['self'] = _selfId;
             event['peers'] = peers;
             this.onPeersUpdate(event);
           }
@@ -120,8 +119,8 @@ class Signaling {
           var id = data['from'];
           var description = data['description'];
           var media = data['media'];
-          var session_id = data['session_id'];
-          this._session_id = session_id;
+          var sessionId = data['session_id'];
+          this._sessionId = sessionId;
 
           if (this.onStateChange != null) {
             this.onStateChange(SignalingState.CallStateNew);
@@ -178,30 +177,30 @@ class Signaling {
             pc.close();
             _peerConnections.remove(id);
           }
-          this._session_id = null;
+          this._sessionId = null;
           if (this.onStateChange != null) {
             this.onStateChange(SignalingState.CallStateBye);
           }
         }
         break;
       case 'bye':
-        {          var from = data['from'];
-        var to = data['to'];
-        var session_id = data['session_id'];
-        print('bye: ' + session_id);
+        {
+          var from = data['from'];
+          var to = data['to'];
+          var sessionId = data['session_id'];
+          print('bye: ' + sessionId);
 
-        if (_localStream != null) {
-          _localStream.dispose();
-          _localStream = null;
-        }
-
+          if (_localStream != null) {
+            _localStream.dispose();
+            _localStream = null;
+          }
 
           var pc = _peerConnections[to];
           if (pc != null) {
             pc.close();
             _peerConnections.remove(to);
           }
-          this._session_id = null;
+          this._sessionId = null;
           if (this.onStateChange != null) {
             this.onStateChange(SignalingState.CallStateBye);
           }
@@ -238,7 +237,7 @@ class Signaling {
 
       _send('new', {
         'name': _name,
-        'id': _self_id,
+        'id': _selfId,
         'user_agent': 'flutter-webrtc/'+ Platform.operatingSystem +'-plugin 0.0.1'
       });
     }catch(e){
@@ -253,8 +252,7 @@ class Signaling {
       'audio': true,
       'video': {
         'mandatory': {
-          'minWidth':
-              '640', // Provide your own width, height and frame rate here
+          'minWidth': '640', // Provide your own width, height and frame rate here
           'minHeight': '480',
           'minFrameRate': '30',
         },
@@ -282,7 +280,7 @@ class Signaling {
           'sdpMid': candidate.sdpMid,
           'candidate': candidate.candidate,
         },
-        'session_id': this._session_id,
+        'session_id': this._sessionId,
       });
     };
 
@@ -329,7 +327,7 @@ class Signaling {
       _send('offer', {
         'to': id,
         'description': {'sdp': s.sdp, 'type': s.type},
-        'session_id': this._session_id,
+        'session_id': this._sessionId,
         'media': media,
       });
     } catch (e) {
@@ -344,7 +342,7 @@ class Signaling {
       _send('answer', {
         'to': id,
         'description': {'sdp': s.sdp, 'type': s.type},
-        'session_id': this._session_id,
+        'session_id': this._sessionId,
       });
     } catch (e) {
       print(e.toString());
@@ -356,23 +354,5 @@ class Signaling {
     JsonEncoder encoder = new JsonEncoder();
     if (_socket != null) _socket.add(encoder.convert(data));
     print('send: ' + encoder.convert(data));
-  }
-
-  _handleStatsReport(Timer timer, pc) async {
-    if (pc != null) {
-      List<StatsReport> reports = await pc.getStats(null);
-      reports.forEach((report) {
-        print("report => { ");
-        print("    id: " + report.id + ",");
-        print("    type: " + report.type + ",");
-        print("    timestamp: ${report.timestamp},");
-        print("    values => {");
-        report.values.forEach((key, value) {
-          print("        " + key + " : " + value + ", ");
-        });
-        print("    }");
-        print("}");
-      });
-    }
   }
 }
