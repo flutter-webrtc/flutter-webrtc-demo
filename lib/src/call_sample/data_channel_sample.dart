@@ -126,7 +126,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
             ? peer['name'] + '[Your self]'
             : peer['name'] + '[' + peer['user_agent'] + ']'),
         onTap: () => _invitePeer(context, peer['id']),
-        trailing: Icon(Icons.videocam),
+        trailing: Icon(Icons.sms),
         subtitle: Text('id: ' + peer['id']),
       ),
       Divider()
