@@ -29,6 +29,7 @@ class _GetUserMediaSampleState extends State<GetUserMediaSample> {
     if (_inCalling) {
       _hangUp();
     }
+    _localRenderer.dispose();
   }
 
   initRenderers() async {
