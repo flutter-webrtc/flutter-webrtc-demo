@@ -22,6 +22,7 @@ typedef void SignalingStateCallback(SignalingState state);
 typedef void StreamStateCallback(MediaStream stream);
 typedef void OtherEventCallback(dynamic event);
 typedef void DataChannelMessageCallback(RTCDataChannel dc, data);
+typedef void DataChannelCallback(RTCDataChannel dc);
 
 class Signaling {
   String _selfId = randomNumeric(6);
@@ -30,7 +31,7 @@ class Signaling {
   var _url;
   var _name;
   var _peerConnections = new Map<String, RTCPeerConnection>();
-  var _daChannels = new Map<int, RTCDataChannel>();
+  var _daChannels = new Map<String, RTCDataChannel>();
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
   SignalingStateCallback onStateChange;
@@ -38,11 +39,12 @@ class Signaling {
   StreamStateCallback onAddRemoteStream;
   StreamStateCallback onRemoveRemoteStream;
   OtherEventCallback onPeersUpdate;
-  DataChannelMessageCallback onDataChannel;
+  DataChannelMessageCallback onDataChannelMessage;
+  DataChannelCallback onDtaChannel;
 
   Map<String, dynamic> _iceServers = {
     'iceServers': [
-      {'url': 'stun:stun.l.google.com:19302'},
+      {'url': 'stun:demo.cloudwebrtc.com:19302'},
       /**
        * turn server configuration example.
       {
@@ -69,20 +71,26 @@ class Signaling {
     'optional': [],
   };
 
+  final Map<String, dynamic> _dc_constraints = {
+    'mandatory': {
+      'OfferToReceiveAudio': false,
+      'OfferToReceiveVideo': false,
+    },
+    'optional': [],
+  };
+
   Signaling(this._url, this._name);
 
   close() {
-
     if (_localStream != null) {
       _localStream.dispose();
       _localStream = null;
     }
 
-    _peerConnections.forEach((key, pc){
+    _peerConnections.forEach((key, pc) {
       pc.close();
     });
-    if (_socket != null)
-      _socket.close();
+    if (_socket != null) _socket.close();
   }
 
   void invite(String peer_id, String media) {
@@ -94,6 +102,9 @@ class Signaling {
 
     _createPeerConnection(peer_id, media).then((pc) {
       _peerConnections[peer_id] = pc;
+      if (media == 'data') {
+        _createDataChannel(peer_id, pc);
+      }
       _createOffer(peer_id, pc, media);
     });
   }
@@ -109,13 +120,12 @@ class Signaling {
     Map<String, dynamic> mapData = message;
     var data = mapData['data'];
 
-    switch(mapData['type']){
-
+    switch (mapData['type']) {
       case 'peers':
         {
           List<dynamic> peers = data;
-          if(this.onPeersUpdate != null) {
-            Map<String, dynamic> event = new  Map<String, dynamic>();
+          if (this.onPeersUpdate != null) {
+            Map<String, dynamic> event = new Map<String, dynamic>();
             event['self'] = _selfId;
             event['peers'] = peers;
             this.onPeersUpdate(event);
@@ -136,9 +146,9 @@ class Signaling {
 
           _createPeerConnection(id, media).then((pc) {
             _peerConnections[id] = pc;
-            pc.setRemoteDescription(
-                new RTCSessionDescription(description['sdp'], description['type']));
-            _createAnswer(id, pc);
+            pc.setRemoteDescription(new RTCSessionDescription(
+                description['sdp'], description['type']));
+            _createAnswer(id, pc, media);
           });
         }
         break;
@@ -149,8 +159,8 @@ class Signaling {
 
           var pc = _peerConnections[id];
           if (pc != null) {
-            pc.setRemoteDescription(
-                new RTCSessionDescription(description['sdp'], description['type']));
+            pc.setRemoteDescription(new RTCSessionDescription(
+                description['sdp'], description['type']));
           }
         }
         break;
@@ -246,10 +256,11 @@ class Signaling {
       _send('new', {
         'name': _name,
         'id': _selfId,
-        'user_agent': 'flutter-webrtc/'+ Platform.operatingSystem +'-plugin 0.0.1'
+        'user_agent':
+            'flutter-webrtc/' + Platform.operatingSystem + '-plugin 0.0.1'
       });
-    }catch(e){
-      if(this.onStateChange != null){
+    } catch (e) {
+      if (this.onStateChange != null) {
         this.onStateChange(SignalingState.ConnectionError);
       }
     }
@@ -260,7 +271,8 @@ class Signaling {
       'audio': true,
       'video': {
         'mandatory': {
-          'minWidth': '640', // Provide your own width, height and frame rate here
+          'minWidth':
+              '640', // Provide your own width, height and frame rate here
           'minHeight': '480',
           'minFrameRate': '30',
         },
@@ -270,16 +282,16 @@ class Signaling {
     };
 
     MediaStream stream = await navigator.getUserMedia(mediaConstraints);
-    if(this.onLocalStream != null){
+    if (this.onLocalStream != null) {
       this.onLocalStream(stream);
     }
     return stream;
   }
 
   _createPeerConnection(id, media) async {
-    _localStream = await createStream();
+    if (media != 'data') _localStream = await createStream();
     RTCPeerConnection pc = await createPeerConnection(_iceServers, _config);
-    pc.addStream(_localStream);
+    if (media != 'data') pc.addStream(_localStream);
     pc.onIceCandidate = (candidate) {
       _send('candidate', {
         'to': id,
@@ -292,15 +304,16 @@ class Signaling {
       });
     };
 
+    pc.onIceConnectionState = (state) {
+    };
+
     pc.onAddStream = (stream) {
-      if(this.onAddRemoteStream != null)
-        this.onAddRemoteStream(stream);
+      if (this.onAddRemoteStream != null) this.onAddRemoteStream(stream);
       //_remoteStreams.add(stream);
     };
 
     pc.onRemoveStream = (stream) {
-      if(this.onRemoveRemoteStream != null)
-        this.onRemoveRemoteStream(stream);
+      if (this.onRemoveRemoteStream != null) this.onRemoveRemoteStream(stream);
       _remoteStreams.removeWhere((it) {
         return (it.id == stream.id);
       });
@@ -316,10 +329,13 @@ class Signaling {
   _addDataChannel(id, RTCDataChannel channel) {
     channel.onDataChannelState = (e) {};
     channel.onMessage = (data) {
-      if(this.onDataChannel != null)
-        this.onDataChannel(channel, data);
+      if (this.onDataChannelMessage != null)
+        this.onDataChannelMessage(channel, data);
     };
     _daChannels[id] = channel;
+
+    if(this.onDtaChannel != null)
+      this.onDtaChannel(channel);
   }
 
   _createDataChannel(id, RTCPeerConnection pc, {label: 'fileTransfer'}) async {
@@ -330,7 +346,8 @@ class Signaling {
 
   _createOffer(String id, RTCPeerConnection pc, String media) async {
     try {
-      RTCSessionDescription s = await pc.createOffer(_constraints);
+      RTCSessionDescription s = await pc
+          .createOffer(media == 'data' ? _dc_constraints : _constraints);
       pc.setLocalDescription(s);
       _send('offer', {
         'to': id,
@@ -343,9 +360,10 @@ class Signaling {
     }
   }
 
-  _createAnswer(String id, RTCPeerConnection pc) async {
+  _createAnswer(String id, RTCPeerConnection pc, media) async {
     try {
-      RTCSessionDescription s = await pc.createAnswer(_constraints);
+      RTCSessionDescription s = await pc
+          .createAnswer(media == 'data' ? _dc_constraints : _constraints);
       pc.setLocalDescription(s);
       _send('answer', {
         'to': id,
