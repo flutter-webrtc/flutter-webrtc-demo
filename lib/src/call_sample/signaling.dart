@@ -44,7 +44,7 @@ class Signaling {
 
   Map<String, dynamic> _iceServers = {
     'iceServers': [
-      {'url': 'stun:demo.cloudwebrtc.com:19302'},
+      {'url': 'stun:stun.l.google.com:19302'},
       /**
        * turn server configuration example.
       {
