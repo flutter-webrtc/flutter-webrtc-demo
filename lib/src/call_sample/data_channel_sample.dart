@@ -108,7 +108,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
 
   _invitePeer(context, peerId) async {
     if (_signaling != null && peerId != _selfId) {
-      _signaling.invite(peerId, 'data');
+      _signaling.invite(peerId, 'data', false);
     }
   }
 

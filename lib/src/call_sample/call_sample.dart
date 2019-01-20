@@ -98,9 +98,9 @@ class _CallSampleState extends State<CallSample> {
     }
   }
 
-  _invitePeer(context, peerId) async {
+  _invitePeer(context, peerId, use_screen) async {
     if (_signaling != null && peerId != _selfId) {
-      _signaling.invite(peerId, 'video');
+      _signaling.invite(peerId, 'video', use_screen);
     }
   }
 
@@ -110,6 +110,14 @@ class _CallSampleState extends State<CallSample> {
     }
   }
 
+  _switchCamera() {
+    _signaling.switchCamera();
+  }
+
+  _muteMic() {
+
+  }
+
   _buildRow(context, peer) {
     var self = (peer['id'] == _selfId);
     return ListBody(children: <Widget>[
@@ -117,8 +125,23 @@ class _CallSampleState extends State<CallSample> {
         title: Text(self
             ? peer['name'] + '[Your self]'
             : peer['name'] + '[' + peer['user_agent'] + ']'),
-        onTap: () => _invitePeer(context, peer['id']),
-        trailing: Icon(Icons.videocam),
+        onTap: null,
+        trailing: new SizedBox(
+            width: 100.0,
+            child: new Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  IconButton(
+                    icon: const Icon(Icons.videocam),
+                    onPressed: () => _invitePeer(context, peer['id'], false),
+                    tooltip: 'Video calling',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.screen_share),
+                    onPressed: () => _invitePeer(context, peer['id'], true),
+                    tooltip: 'Screen sharing',
+                  )
+                ])),
         subtitle: Text('id: ' + peer['id']),
       ),
       Divider()
@@ -138,13 +161,28 @@ class _CallSampleState extends State<CallSample> {
           ),
         ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _inCalling
-          ? FloatingActionButton(
-              onPressed: _hangUp,
-              tooltip: 'Hangup',
-              child: new Icon(Icons.call_end),
-            )
-          : null,
+          ? new SizedBox(
+            width: 200.0,
+            child: new Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  FloatingActionButton(
+                    child: const Icon(Icons.switch_camera),
+                    onPressed: _switchCamera,
+                  ),
+                  FloatingActionButton(
+                    onPressed: _hangUp,
+                    tooltip: 'Hangup',
+                    child: new Icon(Icons.call_end),
+                    backgroundColor: Colors.pink,
+                  ),
+                  FloatingActionButton(
+                    child: const Icon(Icons.mic_off),
+                    onPressed: _muteMic,
+                  )
+                ])) : null,
       body: _inCalling
           ? OrientationBuilder(builder: (context, orientation) {
               return new Container(

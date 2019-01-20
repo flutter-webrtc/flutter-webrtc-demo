@@ -93,14 +93,20 @@ class Signaling {
     if (_socket != null) _socket.close();
   }
 
-  void invite(String peer_id, String media) {
+  void switchCamera(){
+    if(_localStream != null){
+     _localStream.getVideoTracks()[0].switchCamera();
+    }
+  }
+
+  void invite(String peer_id, String media, use_screen) {
     this._sessionId = this._selfId + '-' + peer_id;
 
     if (this.onStateChange != null) {
       this.onStateChange(SignalingState.CallStateNew);
     }
 
-    _createPeerConnection(peer_id, media).then((pc) {
+    _createPeerConnection(peer_id, media, use_screen).then((pc) {
       _peerConnections[peer_id] = pc;
       if (media == 'data') {
         _createDataChannel(peer_id, pc);
@@ -144,7 +150,7 @@ class Signaling {
             this.onStateChange(SignalingState.CallStateNew);
           }
 
-          _createPeerConnection(id, media).then((pc) {
+          _createPeerConnection(id, media, false).then((pc) {
             _peerConnections[id] = pc;
             pc.setRemoteDescription(new RTCSessionDescription(
                 description['sdp'], description['type']));
@@ -266,7 +272,7 @@ class Signaling {
     }
   }
 
-  Future<MediaStream> createStream() async {
+  Future<MediaStream> createStream(media, user_screen) async {
     final Map<String, dynamic> mediaConstraints = {
       'audio': true,
       'video': {
@@ -281,15 +287,15 @@ class Signaling {
       }
     };
 
-    MediaStream stream = await navigator.getUserMedia(mediaConstraints);
+    MediaStream stream = user_screen? await navigator.getDisplayMedia(mediaConstraints) : await navigator.getUserMedia(mediaConstraints);
     if (this.onLocalStream != null) {
       this.onLocalStream(stream);
     }
     return stream;
   }
 
-  _createPeerConnection(id, media) async {
-    if (media != 'data') _localStream = await createStream();
+  _createPeerConnection(id, media, user_screen) async {
+    if (media != 'data') _localStream = await createStream(media, user_screen);
     RTCPeerConnection pc = await createPeerConnection(_iceServers, _config);
     if (media != 'data') pc.addStream(_localStream);
     pc.onIceCandidate = (candidate) {
