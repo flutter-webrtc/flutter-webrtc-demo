@@ -31,7 +31,7 @@ class Signaling {
   var _url;
   var _name;
   var _peerConnections = new Map<String, RTCPeerConnection>();
-  var _daChannels = new Map<String, RTCDataChannel>();
+  var _dataChannels = new Map<String, RTCDataChannel>();
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
   SignalingStateCallback onStateChange;
@@ -93,9 +93,9 @@ class Signaling {
     if (_socket != null) _socket.close();
   }
 
-  void switchCamera(){
-    if(_localStream != null){
-     _localStream.getVideoTracks()[0].switchCamera();
+  void switchCamera() {
+    if (_localStream != null) {
+      _localStream.getVideoTracks()[0].switchCamera();
     }
   }
 
@@ -189,7 +189,7 @@ class Signaling {
         {
           var id = data;
           _peerConnections.remove(id);
-          _daChannels.remove(id);
+          _dataChannels.remove(id);
 
           if (_localStream != null) {
             _localStream.dispose();
@@ -224,6 +224,13 @@ class Signaling {
             pc.close();
             _peerConnections.remove(to);
           }
+
+          var dc = _dataChannels[to];
+          if (dc != null) {
+            dc.close();
+            _dataChannels.remove(to);
+          }
+
           this._sessionId = null;
           if (this.onStateChange != null) {
             this.onStateChange(SignalingState.CallStateBye);
@@ -287,7 +294,9 @@ class Signaling {
       }
     };
 
-    MediaStream stream = user_screen? await navigator.getDisplayMedia(mediaConstraints) : await navigator.getUserMedia(mediaConstraints);
+    MediaStream stream = user_screen
+        ? await navigator.getDisplayMedia(mediaConstraints)
+        : await navigator.getUserMedia(mediaConstraints);
     if (this.onLocalStream != null) {
       this.onLocalStream(stream);
     }
@@ -310,8 +319,7 @@ class Signaling {
       });
     };
 
-    pc.onIceConnectionState = (state) {
-    };
+    pc.onIceConnectionState = (state) {};
 
     pc.onAddStream = (stream) {
       if (this.onAddRemoteStream != null) this.onAddRemoteStream(stream);
@@ -338,10 +346,9 @@ class Signaling {
       if (this.onDataChannelMessage != null)
         this.onDataChannelMessage(channel, data);
     };
-    _daChannels[id] = channel;
+    _dataChannels[id] = channel;
 
-    if(this.onDtaChannel != null)
-      this.onDtaChannel(channel);
+    if (this.onDtaChannel != null) this.onDtaChannel(channel);
   }
 
   _createDataChannel(id, RTCPeerConnection pc, {label: 'fileTransfer'}) async {
