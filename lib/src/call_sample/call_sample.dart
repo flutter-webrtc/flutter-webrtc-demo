@@ -45,7 +45,7 @@ class _CallSampleState extends State<CallSample> {
     super.deactivate();
     if (_signaling != null) _signaling.close();
     _localRenderer.dispose();
-    _localRenderer.dispose();
+    _remoteRenderer.dispose();
   }
 
   void _connect() async {
