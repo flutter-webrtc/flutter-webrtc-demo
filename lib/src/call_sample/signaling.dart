@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter_webrtc/webrtc.dart';
 import 'random_string.dart';
 
@@ -28,8 +29,9 @@ class Signaling {
   String _selfId = randomNumeric(6);
   var _socket;
   var _sessionId;
-  var _url;
-  var _name;
+  var _host;
+  var _port = 4443;
+  var _displayName;
   var _peerConnections = new Map<String, RTCPeerConnection>();
   var _dataChannels = new Map<String, RTCDataChannel>();
   MediaStream _localStream;
@@ -45,7 +47,7 @@ class Signaling {
   Map<String, dynamic> _iceServers = {
     'iceServers': [
       {'url': 'stun:stun.l.google.com:19302'},
-      /**
+      /*
        * turn server configuration example.
       {
         'url': 'turn:123.45.67.89:3478',
@@ -79,7 +81,7 @@ class Signaling {
     'optional': [],
   };
 
-  Signaling(this._url, this._name);
+  Signaling(this._host, this._displayName);
 
   close() {
     if (_localStream != null) {
@@ -247,9 +249,47 @@ class Signaling {
     }
   }
 
+  Future<WebSocket> _connectForSelfSignedCert(String host, int port) async {
+    try {
+      Random r = new Random();
+      String key = base64.encode(List<int>.generate(8, (_) => r.nextInt(255)));
+      SecurityContext securityContext = new SecurityContext();
+      HttpClient client = HttpClient(context: securityContext);
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) {
+        print('Allow self-signed certificate => $host:$port. ');
+        return true;
+      };
+
+      HttpClientRequest request = await client.getUrl(
+          Uri.parse('https://$host:$port/ws')); // form the correct url here
+      request.headers.add('Connection', 'Upgrade');
+      request.headers.add('Upgrade', 'websocket');
+      request.headers.add(
+          'Sec-WebSocket-Version', '13'); // insert the correct version here
+      request.headers.add('Sec-WebSocket-Key', key.toLowerCase());
+
+      HttpClientResponse response = await request.close();
+      Socket socket = await response.detachSocket();
+      var webSocket = WebSocket.fromUpgradedSocket(
+        socket,
+        protocol: 'signaling',
+        serverSide: false,
+      );
+
+      return webSocket;
+    }catch(e){
+      throw e;
+    }
+  }
+
   void connect() async {
     try {
-      _socket = await WebSocket.connect(_url);
+      /*
+      var url = 'ws://$_host:$_port';
+      _socket = await WebSocket.connect(url);
+      */
+      _socket = await _connectForSelfSignedCert(_host, _port);
 
       if (this.onStateChange != null) {
         this.onStateChange(SignalingState.ConnectionOpen);
@@ -267,7 +307,7 @@ class Signaling {
       });
 
       _send('new', {
-        'name': _name,
+        'name': _displayName,
         'id': _selfId,
         'user_agent':
             'flutter-webrtc/' + Platform.operatingSystem + '-plugin 0.0.1'

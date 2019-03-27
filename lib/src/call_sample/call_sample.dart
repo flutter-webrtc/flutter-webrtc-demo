@@ -50,7 +50,7 @@ class _CallSampleState extends State<CallSample> {
 
   void _connect() async {
     if (_signaling == null) {
-      _signaling = new Signaling('ws://' + serverIP + ':4442', _displayName)
+      _signaling = new Signaling(serverIP, _displayName)
         ..connect();
 
       _signaling.onStateChange = (SignalingState state) {
