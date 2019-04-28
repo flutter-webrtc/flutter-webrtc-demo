@@ -42,7 +42,7 @@ class Signaling {
   StreamStateCallback onRemoveRemoteStream;
   OtherEventCallback onPeersUpdate;
   DataChannelMessageCallback onDataChannelMessage;
-  DataChannelCallback onDtaChannel;
+  DataChannelCallback onDataChannel;
 
   Map<String, dynamic> _iceServers = {
     'iceServers': [
@@ -388,7 +388,7 @@ class Signaling {
     };
     _dataChannels[id] = channel;
 
-    if (this.onDtaChannel != null) this.onDtaChannel(channel);
+    if (this.onDataChannel != null) this.onDataChannel(channel);
   }
 
   _createDataChannel(id, RTCPeerConnection pc, {label: 'fileTransfer'}) async {

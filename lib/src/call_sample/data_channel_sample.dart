@@ -54,7 +54,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
         });
       };
 
-      _signaling.onDtaChannel = (channel){
+      _signaling.onDataChannel = (channel){
         _dataChannel = channel;
       };
 
