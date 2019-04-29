@@ -33,7 +33,7 @@ class _MyAppState extends State<LoopBackSample> {
       _hangUp();
     }
     _localRenderer.dispose();
-    _localRenderer.dispose();
+    _remoteRenderer.dispose();
   }
 
   initRenderers() async {
