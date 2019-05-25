@@ -22,7 +22,7 @@ enum SignalingState {
 typedef void SignalingStateCallback(SignalingState state);
 typedef void StreamStateCallback(MediaStream stream);
 typedef void OtherEventCallback(dynamic event);
-typedef void DataChannelMessageCallback(RTCDataChannel dc, data);
+typedef void DataChannelMessageCallback(RTCDataChannel dc, RTCDataChannelMessage data);
 typedef void DataChannelCallback(RTCDataChannel dc);
 
 class Signaling {
@@ -382,7 +382,7 @@ class Signaling {
 
   _addDataChannel(id, RTCDataChannel channel) {
     channel.onDataChannelState = (e) {};
-    channel.onMessage = (data) {
+    channel.onMessage = (RTCDataChannelMessage data) {
       if (this.onDataChannelMessage != null)
         this.onDataChannelMessage(channel, data);
     };

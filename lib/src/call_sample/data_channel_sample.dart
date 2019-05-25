@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:core';
 import 'dart:async';
+import 'dart:typed_data';
 import 'signaling.dart';
+import 'package:flutter_webrtc/rtc_data_channel.dart';
 
 class DataChannelSample extends StatefulWidget {
   static String tag = 'call_sample';
@@ -23,7 +25,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   var _selfId;
   bool _inCalling = false;
   final String serverIP;
-  var _dataChannel;
+  RTCDataChannel _dataChannel;
   Timer _timer;
   var _text = '';
   _DataChannelSampleState({Key key, @required this.serverIP});
@@ -48,9 +50,14 @@ class _DataChannelSampleState extends State<DataChannelSample> {
       _signaling = new Signaling(serverIP, _displayName)
         ..connect();
 
-      _signaling.onDataChannelMessage = (dc, text){
+      _signaling.onDataChannelMessage = (dc, RTCDataChannelMessage data){
         setState(() {
-          _text = text;
+          if(data.isBinary) {
+            print('Got binary [' + data.binary.toString() + ']');
+          }
+          else{
+            _text = data.text;
+          }
         });
       };
 
@@ -102,7 +109,9 @@ class _DataChannelSampleState extends State<DataChannelSample> {
 
   _handleDataChannelTest(Timer timer) async {
     if(_dataChannel != null){
-      _dataChannel.send('text', 'Say hello ' + timer.tick.toString() + ' times, from [' + _selfId + ']');
+      String text = 'Say hello ' + timer.tick.toString() + ' times, from [' + _selfId + ']';
+      _dataChannel.send(RTCDataChannelMessage.fromBinary(Uint8List(timer.tick + 1)));
+      _dataChannel.send(RTCDataChannelMessage(text));
     }
   }
 

@@ -43,7 +43,7 @@ class _MyAppState extends State<LoopBackSample> {
 
   void handleStatsReport(Timer timer) async {
     if (_peerConnection != null) {
-      List<StatsReport> reports = await _peerConnection.getStats(null);
+      List<StatsReport> reports = await _peerConnection.getStats();
       reports.forEach((report) {
         print("report => { ");
         print("    id: " + report.id + ",");
