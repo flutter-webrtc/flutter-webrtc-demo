@@ -22,7 +22,8 @@ enum SignalingState {
 typedef void SignalingStateCallback(SignalingState state);
 typedef void StreamStateCallback(MediaStream stream);
 typedef void OtherEventCallback(dynamic event);
-typedef void DataChannelMessageCallback(RTCDataChannel dc, RTCDataChannelMessage data);
+typedef void DataChannelMessageCallback(
+    RTCDataChannel dc, RTCDataChannelMessage data);
 typedef void DataChannelCallback(RTCDataChannel dc);
 
 class Signaling {
@@ -34,6 +35,8 @@ class Signaling {
   var _displayName;
   var _peerConnections = new Map<String, RTCPeerConnection>();
   var _dataChannels = new Map<String, RTCDataChannel>();
+  var _remoteCandidates = [];
+
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
   SignalingStateCallback onStateChange;
@@ -152,12 +155,17 @@ class Signaling {
             this.onStateChange(SignalingState.CallStateNew);
           }
 
-          _createPeerConnection(id, media, false).then((pc) {
-            _peerConnections[id] = pc;
-            pc.setRemoteDescription(new RTCSessionDescription(
-                description['sdp'], description['type']));
-            _createAnswer(id, pc, media);
-          });
+          var pc = await _createPeerConnection(id, media, false);
+          _peerConnections[id] = pc;
+          await pc.setRemoteDescription(new RTCSessionDescription(
+              description['sdp'], description['type']));
+          await _createAnswer(id, pc, media);
+          if (this._remoteCandidates.length > 0) {
+            _remoteCandidates.forEach((candidate) async {
+              await pc.addCandidate(candidate);
+            });
+            _remoteCandidates.clear();
+          }
         }
         break;
       case 'answer':
@@ -167,7 +175,7 @@ class Signaling {
 
           var pc = _peerConnections[id];
           if (pc != null) {
-            pc.setRemoteDescription(new RTCSessionDescription(
+            await pc.setRemoteDescription(new RTCSessionDescription(
                 description['sdp'], description['type']));
           }
         }
@@ -177,13 +185,14 @@ class Signaling {
           var id = data['from'];
           var candidateMap = data['candidate'];
           var pc = _peerConnections[id];
-
+          RTCIceCandidate candidate = new RTCIceCandidate(
+              candidateMap['candidate'],
+              candidateMap['sdpMid'],
+              candidateMap['sdpMLineIndex']);
           if (pc != null) {
-            RTCIceCandidate candidate = new RTCIceCandidate(
-                candidateMap['candidate'],
-                candidateMap['sdpMid'],
-                candidateMap['sdpMLineIndex']);
-            pc.addCandidate(candidate);
+            await pc.addCandidate(candidate);
+          } else {
+            _remoteCandidates.add(candidate);
           }
         }
         break;
@@ -278,7 +287,7 @@ class Signaling {
       );
 
       return webSocket;
-    }catch(e){
+    } catch (e) {
       throw e;
     }
   }
