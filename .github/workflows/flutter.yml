@@ -1,6 +1,11 @@
-name: Flutter action
+name: Flutter CI
 
-on: [push]
+on:
+  push:
+    branches:
+      - dev
+      - master
+      - action_test
 
 jobs:
   test:
@@ -8,7 +13,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
+#        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
@@ -16,8 +22,10 @@ jobs:
           java-version: '12.x'
       - uses: subosito/flutter-action@v1
         with:
-          flutter-version: '1.8.4'
-          channel: 'beta'
-      - run: flutter pub get
+          flutter-version: '1.7.8+hotfix.4'
+          channel: 'stable'
+      - run: flutter packages get
       - run: flutter test
-      - run: flutter build apk
+      - run: flutter build apk --target-platform android-arm --split-per-abi]
+
+#      - run: curl
