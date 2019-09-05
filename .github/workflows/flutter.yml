@@ -26,6 +26,6 @@ jobs:
           channel: 'stable'
       - run: flutter packages get
       - run: flutter test
-      - run: flutter build apk --target-platform android-arm --split-per-abi]
+      - run: flutter build apk
 
 #      - run: curl
