@@ -22,12 +22,18 @@ dependencies:
   flutter_webrtc:
     path: ../flutter-webrtc
   # Plugins from flutter/plugins, with local desktop implementations.
-  shared_preferences: ^0.5.3
+  shared_preferences: 0.5.2
   shared_preferences_fde:
-    path: ../flutter_plugins_fde/shared_preferences_fde
-  url_launcher: ^5.0.0
-  url_launcher_fde:
-    path: ../flutter_plugins_fde/url_launcher_fde
+    git:
+      url: https://github.com/google/flutter-desktop-embedding.git
+      path: plugins/flutter_plugins/shared_preferences_fde
+
+  # Required for MediaRecorder example
+  path_provider:
+  path_provider_fde:
+    git:
+      url: https://github.com/google/flutter-desktop-embedding.git
+      path: plugins/flutter_plugins/path_provider_fde
 
 dev_dependencies:
   flutter_test:
