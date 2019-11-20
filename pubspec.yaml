@@ -20,7 +20,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
   flutter_webrtc:
-    path: ../flutter-webrtc
+    git:
+      url: https://github.com/cloudwebrtc/flutter-webrtc.git
+
   # Plugins from flutter/plugins, with local desktop implementations.
   shared_preferences: 0.5.2
   shared_preferences_fde:
@@ -34,6 +36,7 @@ dependencies:
     git:
       url: https://github.com/google/flutter-desktop-embedding.git
       path: plugins/flutter_plugins/path_provider_fde
+
 
 dev_dependencies:
   flutter_test:
