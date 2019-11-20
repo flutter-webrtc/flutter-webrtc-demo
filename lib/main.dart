@@ -1,13 +1,23 @@
+import 'dart:core';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/webrtc.dart';
+
 import 'src/utils/key_value_store.dart'
     if (dart.library.js) 'src/utils/key_value_store_web.dart';
-import 'dart:core';
+import 'package:flutter/foundation.dart'
+    show debugDefaultTargetPlatformOverride;
+
 import 'src/basic_sample/basic_sample.dart';
 import 'src/call_sample/call_sample.dart';
 import 'src/call_sample/data_channel_sample.dart';
 import 'src/route_item.dart';
 
-void main() => runApp(new MyApp());
+void main(){
+  if (WebRTC.platformIsDesktop)
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  runApp(new MyApp());
+}
 
 class MyApp extends StatefulWidget {
   @override
