@@ -1,12 +1,24 @@
+import 'dart:core';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:core';
+import 'package:flutter/foundation.dart'
+    show debugDefaultTargetPlatformOverride;
+
 import 'src/basic_sample/basic_sample.dart';
 import 'src/call_sample/call_sample.dart';
 import 'src/call_sample/data_channel_sample.dart';
 import 'src/route_item.dart';
 
-void main() => runApp(new MyApp());
+bool isDesktop() {
+  return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+}
+
+void main(){
+ if(isDesktop())
+   debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  runApp(new MyApp());
+}
 
 class MyApp extends StatefulWidget {
   @override
