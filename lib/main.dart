@@ -1,7 +1,10 @@
 import 'dart:core';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_webrtc/webrtc.dart';
+
+import 'src/utils/key_value_store.dart'
+    if (dart.library.js) 'src/utils/key_value_store_web.dart';
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
 
@@ -10,13 +13,9 @@ import 'src/call_sample/call_sample.dart';
 import 'src/call_sample/data_channel_sample.dart';
 import 'src/route_item.dart';
 
-bool isDesktop() {
-  return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
-}
-
 void main(){
- if(isDesktop())
-   debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  if (WebRTC.platformIsDesktop)
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   runApp(new MyApp());
 }
 
@@ -33,7 +32,7 @@ enum DialogDemoAction {
 class _MyAppState extends State<MyApp> {
   List<RouteItem> items;
   String _serverAddress = '';
-  SharedPreferences prefs;
+  KeyValueStore keyValueStore = KeyValueStore();
   bool _datachannel = false;
   @override
   initState() {
@@ -71,9 +70,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   _initData() async {
-    prefs = await SharedPreferences.getInstance();
+    await keyValueStore.init();
     setState(() {
-      _serverAddress = prefs.getString('server') ?? 'demo.cloudwebrtc.com';
+      _serverAddress = keyValueStore.getString('server') ?? 'demo.cloudwebrtc.com';
     });
   }
 
@@ -85,12 +84,13 @@ class _MyAppState extends State<MyApp> {
       // The value passed to Navigator.pop() or null.
       if (value != null) {
         if (value == DialogDemoAction.connect) {
-          prefs.setString('server', _serverAddress);
+          keyValueStore.setString('server', _serverAddress);
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (BuildContext context) =>
-                      _datachannel? DataChannelSample(ip: _serverAddress) : CallSample(ip: _serverAddress)));
+                  builder: (BuildContext context) => _datachannel
+                      ? DataChannelSample(ip: _serverAddress)
+                      : CallSample(ip: _serverAddress)));
         }
       }
     });

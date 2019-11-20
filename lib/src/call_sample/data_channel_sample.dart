@@ -4,7 +4,7 @@ import 'dart:core';
 import 'dart:async';
 import 'dart:typed_data';
 import 'signaling.dart';
-import 'package:flutter_webrtc/rtc_data_channel.dart';
+import 'package:flutter_webrtc/webrtc.dart';
 
 class DataChannelSample extends StatefulWidget {
   static String tag = 'call_sample';
@@ -19,8 +19,6 @@ class DataChannelSample extends StatefulWidget {
 
 class _DataChannelSampleState extends State<DataChannelSample> {
   Signaling _signaling;
-  String _displayName =
-      Platform.localHostname + '(' + Platform.operatingSystem + ")";
   List<dynamic> _peers;
   var _selfId;
   bool _inCalling = false;
@@ -47,7 +45,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
 
   void _connect() async {
     if (_signaling == null) {
-      _signaling = new Signaling(serverIP, _displayName)
+      _signaling = new Signaling(serverIP)
         ..connect();
 
       _signaling.onDataChannelMessage = (dc, RTCDataChannelMessage data){

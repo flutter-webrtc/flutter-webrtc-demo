@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:async';
-import 'dart:io';
-import 'dart:math';
 import 'package:flutter_webrtc/webrtc.dart';
 import 'random_string.dart';
+
+import '../utils/device_info.dart'
+    if (dart.library.js) '../utils/device_info_web.dart';
+import '../utils/websocket.dart'
+    if (dart.library.js) '../utils/websocket_web.dart';
 
 enum SignalingState {
   CallStateNew,
@@ -28,11 +31,10 @@ typedef void DataChannelCallback(RTCDataChannel dc);
 
 class Signaling {
   String _selfId = randomNumeric(6);
-  var _socket;
+  SimpleWebSocket _socket;
   var _sessionId;
   var _host;
   var _port = 4443;
-  var _displayName;
   var _peerConnections = new Map<String, RTCPeerConnection>();
   var _dataChannels = new Map<String, RTCDataChannel>();
   var _remoteCandidates = [];
@@ -84,7 +86,7 @@ class Signaling {
     'optional': [],
   };
 
-  Signaling(this._host, this._displayName);
+  Signaling(this._host);
 
   close() {
     if (_localStream != null) {
@@ -258,74 +260,36 @@ class Signaling {
     }
   }
 
-  Future<WebSocket> _connectForSelfSignedCert(String host, int port) async {
-    try {
-      Random r = new Random();
-      String key = base64.encode(List<int>.generate(8, (_) => r.nextInt(255)));
-      SecurityContext securityContext = new SecurityContext();
-      HttpClient client = HttpClient(context: securityContext);
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) {
-        print('Allow self-signed certificate => $host:$port. ');
-        return true;
-      };
-
-      HttpClientRequest request = await client.getUrl(
-          Uri.parse('https://$host:$port/ws')); // form the correct url here
-      request.headers.add('Connection', 'Upgrade');
-      request.headers.add('Upgrade', 'websocket');
-      request.headers.add(
-          'Sec-WebSocket-Version', '13'); // insert the correct version here
-      request.headers.add('Sec-WebSocket-Key', key.toLowerCase());
-
-      HttpClientResponse response = await request.close();
-      Socket socket = await response.detachSocket();
-      var webSocket = WebSocket.fromUpgradedSocket(
-        socket,
-        protocol: 'signaling',
-        serverSide: false,
-      );
-
-      return webSocket;
-    } catch (e) {
-      throw e;
-    }
-  }
-
   void connect() async {
-    try {
-      /*
-      var url = 'ws://$_host:$_port';
-      _socket = await WebSocket.connect(url);
-      */
-      _socket = await _connectForSelfSignedCert(_host, _port);
+    var url = 'wss://$_host:$_port';
+    _socket = SimpleWebSocket(url);
 
-      if (this.onStateChange != null) {
-        this.onStateChange(SignalingState.ConnectionOpen);
-      }
+    print('connect to $url');
 
-      _socket.listen((data) {
-        print('Recivied data: ' + data);
-        JsonDecoder decoder = new JsonDecoder();
-        this.onMessage(decoder.convert(data));
-      }, onDone: () {
-        print('Closed by server!');
-        if (this.onStateChange != null) {
-          this.onStateChange(SignalingState.ConnectionClosed);
-        }
-      });
-
+    _socket.onOpen = () {
+      print('onOpen');
+      this?.onStateChange(SignalingState.ConnectionOpen);
       _send('new', {
-        'name': _displayName,
+        'name': DeviceInfo.label,
         'id': _selfId,
-        'user_agent':
-            'flutter-webrtc/' + Platform.operatingSystem + '-plugin 0.0.1'
+        'user_agent': DeviceInfo.userAgent
       });
-    } catch (e) {
+    };
+
+    _socket.onMessage = (message) {
+      print('Recivied data: ' + message);
+      JsonDecoder decoder = new JsonDecoder();
+      this.onMessage(decoder.convert(message));
+    };
+
+    _socket.onClose = (int code, String reason) {
+      print('Closed by server [$code => $reason]!');
       if (this.onStateChange != null) {
-        this.onStateChange(SignalingState.ConnectionError);
+        this.onStateChange(SignalingState.ConnectionClosed);
       }
-    }
+    };
+
+    await _socket.connect();
   }
 
   Future<MediaStream> createStream(media, user_screen) async {
@@ -440,7 +404,6 @@ class Signaling {
   _send(event, data) {
     data['type'] = event;
     JsonEncoder encoder = new JsonEncoder();
-    if (_socket != null) _socket.add(encoder.convert(data));
-    print('send: ' + encoder.convert(data));
+    _socket.send(encoder.convert(data));
   }
 }
