@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'dart:core';
 import 'signaling.dart';
 import 'package:flutter_webrtc/webrtc.dart';
@@ -17,8 +16,6 @@ class CallSample extends StatefulWidget {
 
 class _CallSampleState extends State<CallSample> {
   Signaling _signaling;
-  String _displayName =
-      Platform.localHostname + '(' + Platform.operatingSystem + ")";
   List<dynamic> _peers;
   var _selfId;
   RTCVideoRenderer _localRenderer = new RTCVideoRenderer();
@@ -50,8 +47,7 @@ class _CallSampleState extends State<CallSample> {
 
   void _connect() async {
     if (_signaling == null) {
-      _signaling = new Signaling(serverIP, _displayName)
-        ..connect();
+      _signaling = new Signaling(serverIP)..connect();
 
       _signaling.onStateChange = (SignalingState state) {
         switch (state) {
@@ -114,9 +110,7 @@ class _CallSampleState extends State<CallSample> {
     _signaling.switchCamera();
   }
 
-  _muteMic() {
-
-  }
+  _muteMic() {}
 
   _buildRow(context, peer) {
     var self = (peer['id'] == _selfId);
@@ -164,25 +158,26 @@ class _CallSampleState extends State<CallSample> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _inCalling
           ? new SizedBox(
-            width: 200.0,
-            child: new Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  FloatingActionButton(
-                    child: const Icon(Icons.switch_camera),
-                    onPressed: _switchCamera,
-                  ),
-                  FloatingActionButton(
-                    onPressed: _hangUp,
-                    tooltip: 'Hangup',
-                    child: new Icon(Icons.call_end),
-                    backgroundColor: Colors.pink,
-                  ),
-                  FloatingActionButton(
-                    child: const Icon(Icons.mic_off),
-                    onPressed: _muteMic,
-                  )
-                ])) : null,
+              width: 200.0,
+              child: new Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    FloatingActionButton(
+                      child: const Icon(Icons.switch_camera),
+                      onPressed: _switchCamera,
+                    ),
+                    FloatingActionButton(
+                      onPressed: _hangUp,
+                      tooltip: 'Hangup',
+                      child: new Icon(Icons.call_end),
+                      backgroundColor: Colors.pink,
+                    ),
+                    FloatingActionButton(
+                      child: const Icon(Icons.mic_off),
+                      onPressed: _muteMic,
+                    )
+                  ]))
+          : null,
       body: _inCalling
           ? OrientationBuilder(builder: (context, orientation) {
               return new Container(
