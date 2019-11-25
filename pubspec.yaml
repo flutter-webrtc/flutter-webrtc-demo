@@ -22,7 +22,7 @@ dependencies:
   flutter_webrtc:
     git:
       url: https://github.com/cloudwebrtc/flutter-webrtc.git
-  shared_preferences:
+  shared_preferences: 0.5.2
 
 dev_dependencies:
   flutter_test:
