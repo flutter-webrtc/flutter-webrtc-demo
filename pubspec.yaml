@@ -20,18 +20,12 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
   flutter_webrtc: ^0.2.2
-  shared_preferences: 0.5.2
-  shared_preferences_fde:
-    git:
-      url: https://github.com/google/flutter-desktop-embedding.git
-      path: plugins/flutter_plugins/shared_preferences_fde
+  shared_preferences:
+  shared_preferences_macos:
 
   # Required for MediaRecorder example
   path_provider:
-  path_provider_fde:
-    git:
-      url: https://github.com/google/flutter-desktop-embedding.git
-      path: plugins/flutter_plugins/path_provider_fde
+  path_provider_macos:
 
 dev_dependencies:
   flutter_test:
