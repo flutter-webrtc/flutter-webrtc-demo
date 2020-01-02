@@ -201,7 +201,7 @@ class Signaling {
       case 'leave':
         {
           var id = data;
-          _peerConnections.remove(id);
+          var pc = _peerConnections.remove(id);
           _dataChannels.remove(id);
 
           if (_localStream != null) {
@@ -209,10 +209,8 @@ class Signaling {
             _localStream = null;
           }
 
-          var pc = _peerConnections[id];
           if (pc != null) {
             pc.close();
-            _peerConnections.remove(id);
           }
           this._sessionId = null;
           if (this.onStateChange != null) {
