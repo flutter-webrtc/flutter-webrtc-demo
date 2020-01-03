@@ -26,7 +26,7 @@ class SimpleWebSocket {
         this?.onClose(_socket.closeCode, _socket.closeReason);
       });
     } catch (e) {
-      this.onClose(_socket.closeCode, _socket.closeReason);
+      this.onClose(500, e.toString());
     }
   }
 
