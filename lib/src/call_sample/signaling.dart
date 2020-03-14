@@ -220,7 +220,6 @@ class Signaling {
         break;
       case 'bye':
         {
-          var from = data['from'];
           var to = data['to'];
           var sessionId = data['session_id'];
           print('bye: ' + sessionId);
@@ -259,7 +258,7 @@ class Signaling {
   }
 
   void connect() async {
-    var url = 'wss://$_host:$_port';
+    var url = 'wss://$_host:$_port/ws';
     _socket = SimpleWebSocket(url);
 
     print('connect to $url');
@@ -321,6 +320,7 @@ class Signaling {
     pc.onIceCandidate = (candidate) {
       _send('candidate', {
         'to': id,
+        'from': _selfId,
         'candidate': {
           'sdpMLineIndex': candidate.sdpMlineIndex,
           'sdpMid': candidate.sdpMid,
@@ -375,6 +375,7 @@ class Signaling {
       pc.setLocalDescription(s);
       _send('offer', {
         'to': id,
+        'from': _selfId,
         'description': {'sdp': s.sdp, 'type': s.type},
         'session_id': this._sessionId,
         'media': media,
@@ -391,6 +392,7 @@ class Signaling {
       pc.setLocalDescription(s);
       _send('answer', {
         'to': id,
+        'from': _selfId,
         'description': {'sdp': s.sdp, 'type': s.type},
         'session_id': this._sessionId,
       });
@@ -400,8 +402,10 @@ class Signaling {
   }
 
   _send(event, data) {
-    data['type'] = event;
+    var request = new Map();
+    request["type"] = event;
+    request["data"] = data;
     JsonEncoder encoder = new JsonEncoder();
-    _socket.send(encoder.convert(data));
+    _socket.send(encoder.convert(request));
   }
 }
