@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_webrtc/webrtc.dart';
 import 'random_string.dart';
 
@@ -30,6 +31,8 @@ typedef void DataChannelMessageCallback(
 typedef void DataChannelCallback(RTCDataChannel dc);
 
 class Signaling {
+  JsonEncoder _encoder = new JsonEncoder();
+  JsonDecoder _decoder = new JsonDecoder();
   String _selfId = randomNumeric(6);
   SimpleWebSocket _socket;
   var _sessionId;
@@ -38,6 +41,7 @@ class Signaling {
   var _peerConnections = new Map<String, RTCPeerConnection>();
   var _dataChannels = new Map<String, RTCDataChannel>();
   var _remoteCandidates = [];
+  var _turnCredential;
 
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
@@ -98,6 +102,17 @@ class Signaling {
       pc.close();
     });
     if (_socket != null) _socket.close();
+  }
+
+  getTurnCredential(String host) async {
+    var httpClient = new HttpClient();
+    var uri = new Uri.http('$host', '/api/turn',
+        {'service': 'turn', 'username': 'flutter-webrtc'});
+    var request = await httpClient.getUrl(uri);
+    var response = await request.close();
+    var responseBody = await response.transform(Utf8Decoder()).join();
+    Map data = _decoder.convert(responseBody);
+    return data;
   }
 
   void switchCamera() {
@@ -263,6 +278,28 @@ class Signaling {
 
     print('connect to $url');
 
+    if (_turnCredential == null) {
+      try {
+        _turnCredential = await getTurnCredential(_host);
+        /*{
+            "username": "1584195784:mbzrxpgjys",
+            "password": "isyl6FF6nqMTB9/ig5MrMRUXqZg",
+            "ttl": 86400,
+            "uris": ["turn:127.0.0.1:19302?transport=udp"]
+          }
+        */
+        _iceServers = {
+          'iceServers': [
+            {
+              'url': _turnCredential['uris'][0],
+              'username': _turnCredential['username'],
+              'credential': _turnCredential['password']
+            },
+          ]
+        };
+      } catch (e) {}
+    }
+
     _socket.onOpen = () {
       print('onOpen');
       this?.onStateChange(SignalingState.ConnectionOpen);
@@ -405,7 +442,6 @@ class Signaling {
     var request = new Map();
     request["type"] = event;
     request["data"] = data;
-    JsonEncoder encoder = new JsonEncoder();
-    _socket.send(encoder.convert(request));
+    _socket.send(_encoder.convert(request));
   }
 }
