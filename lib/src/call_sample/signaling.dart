@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter_webrtc/webrtc.dart';
+
 import 'random_string.dart';
 
 import '../utils/device_info.dart'
     if (dart.library.js) '../utils/device_info_web.dart';
 import '../utils/websocket.dart'
     if (dart.library.js) '../utils/websocket_web.dart';
+import '../utils/turn.dart'
+    if (dart.library.js) '../utils/turn_web.dart';
 
 enum SignalingState {
   CallStateNew,
@@ -30,14 +33,17 @@ typedef void DataChannelMessageCallback(
 typedef void DataChannelCallback(RTCDataChannel dc);
 
 class Signaling {
+  JsonEncoder _encoder = new JsonEncoder();
+  JsonDecoder _decoder = new JsonDecoder();
   String _selfId = randomNumeric(6);
   SimpleWebSocket _socket;
   var _sessionId;
   var _host;
-  var _port = 4443;
+  var _port = 8086;
   var _peerConnections = new Map<String, RTCPeerConnection>();
   var _dataChannels = new Map<String, RTCDataChannel>();
   var _remoteCandidates = [];
+  var _turnCredential;
 
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
@@ -220,7 +226,6 @@ class Signaling {
         break;
       case 'bye':
         {
-          var from = data['from'];
           var to = data['to'];
           var sessionId = data['session_id'];
           print('bye: ' + sessionId);
@@ -259,10 +264,32 @@ class Signaling {
   }
 
   void connect() async {
-    var url = 'wss://$_host:$_port';
+    var url = 'https://$_host:$_port/ws';
     _socket = SimpleWebSocket(url);
 
     print('connect to $url');
+
+    if (_turnCredential == null) {
+      try {
+        _turnCredential = await getTurnCredential(_host, _port);
+        /*{
+            "username": "1584195784:mbzrxpgjys",
+            "password": "isyl6FF6nqMTB9/ig5MrMRUXqZg",
+            "ttl": 86400,
+            "uris": ["turn:127.0.0.1:19302?transport=udp"]
+          }
+        */
+        _iceServers = {
+          'iceServers': [
+            {
+              'url': _turnCredential['uris'][0],
+              'username': _turnCredential['username'],
+              'credential': _turnCredential['password']
+            },
+          ]
+        };
+      } catch (e) {}
+    }
 
     _socket.onOpen = () {
       print('onOpen');
@@ -321,6 +348,7 @@ class Signaling {
     pc.onIceCandidate = (candidate) {
       _send('candidate', {
         'to': id,
+        'from': _selfId,
         'candidate': {
           'sdpMLineIndex': candidate.sdpMlineIndex,
           'sdpMid': candidate.sdpMid,
@@ -375,6 +403,7 @@ class Signaling {
       pc.setLocalDescription(s);
       _send('offer', {
         'to': id,
+        'from': _selfId,
         'description': {'sdp': s.sdp, 'type': s.type},
         'session_id': this._sessionId,
         'media': media,
@@ -391,6 +420,7 @@ class Signaling {
       pc.setLocalDescription(s);
       _send('answer', {
         'to': id,
+        'from': _selfId,
         'description': {'sdp': s.sdp, 'type': s.type},
         'session_id': this._sessionId,
       });
@@ -400,8 +430,9 @@ class Signaling {
   }
 
   _send(event, data) {
-    data['type'] = event;
-    JsonEncoder encoder = new JsonEncoder();
-    _socket.send(encoder.convert(data));
+    var request = new Map();
+    request["type"] = event;
+    request["data"] = data;
+    _socket.send(_encoder.convert(request));
   }
 }

@@ -151,6 +151,8 @@ class _MyAppState extends State<LoopBackSample> {
       //change for loopback.
       description.type = 'answer';
       _peerConnection.setRemoteDescription(description);
+
+      _localStream.getAudioTracks()[0].setMicrophoneMute(false);
     } catch (e) {
       print(e.toString());
     }

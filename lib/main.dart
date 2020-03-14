@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
-import 'src/utils/key_value_store.dart'
-    if (dart.library.js) 'src/utils/key_value_store_web.dart';
 import 'dart:core';
+
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'src/basic_sample/basic_sample.dart';
 import 'src/call_sample/call_sample.dart';
 import 'src/call_sample/data_channel_sample.dart';
@@ -21,8 +22,9 @@ enum DialogDemoAction {
 
 class _MyAppState extends State<MyApp> {
   List<RouteItem> items;
-  String _serverAddress = '';
-  KeyValueStore keyValueStore = KeyValueStore();
+  String _server = '';
+  SharedPreferences _prefs;
+
   bool _datachannel = false;
   @override
   initState() {
@@ -60,9 +62,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   _initData() async {
-    await keyValueStore.init();
+    _prefs = await SharedPreferences.getInstance();
     setState(() {
-      _serverAddress = keyValueStore.getString('server') ?? 'demo.cloudwebrtc.com';
+      _server = _prefs.getString('server') ?? 'demo.cloudwebrtc.com';
     });
   }
 
@@ -74,13 +76,13 @@ class _MyAppState extends State<MyApp> {
       // The value passed to Navigator.pop() or null.
       if (value != null) {
         if (value == DialogDemoAction.connect) {
-          keyValueStore.setString('server', _serverAddress);
+          _prefs.setString('server', _server);
           Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (BuildContext context) => _datachannel
-                      ? DataChannelSample(ip: _serverAddress)
-                      : CallSample(ip: _serverAddress)));
+                      ? DataChannelSample(ip: _server)
+                      : CallSample(ip: _server)));
         }
       }
     });
@@ -94,11 +96,11 @@ class _MyAppState extends State<MyApp> {
             content: TextField(
               onChanged: (String text) {
                 setState(() {
-                  _serverAddress = text;
+                  _server = text;
                 });
               },
               decoration: InputDecoration(
-                hintText: _serverAddress,
+                hintText: _server,
               ),
               textAlign: TextAlign.center,
             ),

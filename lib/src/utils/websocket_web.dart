@@ -11,7 +11,9 @@ class SimpleWebSocket {
   OnMessageCallback onMessage;
   OnCloseCallback onClose;
 
-  SimpleWebSocket(this._url);
+  SimpleWebSocket(this._url) {
+    _url = _url.replaceAll('https:', 'wss:');
+  }
 
   connect() async {
     try {
@@ -28,7 +30,7 @@ class SimpleWebSocket {
         this?.onClose(e.code, e.reason);
       });
     } catch (e) {
-      this?.onClose(e.code, e.reason);
+      this?.onClose(500, e.toString());
     }
   }
 
@@ -42,6 +44,6 @@ class SimpleWebSocket {
   }
 
   close() {
-    _socket.close();
+    if (_socket != null) _socket.close();
   }
 }
