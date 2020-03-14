@@ -1,13 +1,15 @@
 import 'dart:convert';
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter_webrtc/webrtc.dart';
+
 import 'random_string.dart';
 
 import '../utils/device_info.dart'
     if (dart.library.js) '../utils/device_info_web.dart';
 import '../utils/websocket.dart'
     if (dart.library.js) '../utils/websocket_web.dart';
+import '../utils/turn.dart'
+    if (dart.library.js) '../utils/turn_web.dart';
 
 enum SignalingState {
   CallStateNew,
@@ -37,7 +39,7 @@ class Signaling {
   SimpleWebSocket _socket;
   var _sessionId;
   var _host;
-  var _port = 4443;
+  var _port = 8086;
   var _peerConnections = new Map<String, RTCPeerConnection>();
   var _dataChannels = new Map<String, RTCDataChannel>();
   var _remoteCandidates = [];
@@ -102,17 +104,6 @@ class Signaling {
       pc.close();
     });
     if (_socket != null) _socket.close();
-  }
-
-  getTurnCredential(String host) async {
-    var httpClient = new HttpClient();
-    var uri = new Uri.http('$host', '/api/turn',
-        {'service': 'turn', 'username': 'flutter-webrtc'});
-    var request = await httpClient.getUrl(uri);
-    var response = await request.close();
-    var responseBody = await response.transform(Utf8Decoder()).join();
-    Map data = _decoder.convert(responseBody);
-    return data;
   }
 
   void switchCamera() {
@@ -273,14 +264,14 @@ class Signaling {
   }
 
   void connect() async {
-    var url = 'wss://$_host:$_port/ws';
+    var url = 'https://$_host:$_port/ws';
     _socket = SimpleWebSocket(url);
 
     print('connect to $url');
 
     if (_turnCredential == null) {
       try {
-        _turnCredential = await getTurnCredential(_host);
+        _turnCredential = await getTurnCredential(_host, _port);
         /*{
             "username": "1584195784:mbzrxpgjys",
             "password": "isyl6FF6nqMTB9/ig5MrMRUXqZg",
