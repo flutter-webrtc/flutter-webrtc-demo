@@ -13,35 +13,35 @@ final List<RouteItem> items = <RouteItem>[
       push: (BuildContext context) {
         Navigator.push(
             context,
-            new MaterialPageRoute(
-                builder: (BuildContext context) => new GetUserMediaSample()));
+            MaterialPageRoute(
+                builder: (BuildContext context) => GetUserMediaSample()));
       }),
   RouteItem(
       title: 'LoopBack Sample',
       push: (BuildContext context) {
         Navigator.push(
             context,
-            new MaterialPageRoute(
-                builder: (BuildContext context) => new LoopBackSample()));
+            MaterialPageRoute(
+                builder: (BuildContext context) => LoopBackSample()));
       }),
   RouteItem(
       title: 'DataChannel Test',
       push: (BuildContext context) {
         Navigator.push(
             context,
-            new MaterialPageRoute(
-                builder: (BuildContext context) => new DataChannelSample()));
+            MaterialPageRoute(
+                builder: (BuildContext context) => DataChannelSample()));
       }),
 ];
 
 class BasicSample extends StatefulWidget {
   static String tag = 'basic_sample';
   @override
-  _BasicSampleState createState() => new _BasicSampleState();
+  _BasicSampleState createState() => _BasicSampleState();
 }
 
 class _BasicSampleState extends State<BasicSample> {
-  GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   @override
   initState() {
     super.initState();
@@ -65,11 +65,11 @@ class _BasicSampleState extends State<BasicSample> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-        appBar: new AppBar(
-          title: new Text('Basic API Tests'),
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Basic API Tests'),
         ),
-        body: new ListView.builder(
+        body: ListView.builder(
             shrinkWrap: true,
             padding: const EdgeInsets.all(0.0),
             itemCount: items.length,

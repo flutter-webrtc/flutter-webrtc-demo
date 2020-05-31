@@ -9,12 +9,12 @@ class GetUserMediaSample extends StatefulWidget {
   static String tag = 'get_usermedia_sample';
 
   @override
-  _GetUserMediaSampleState createState() => new _GetUserMediaSampleState();
+  _GetUserMediaSampleState createState() => _GetUserMediaSampleState();
 }
 
 class _GetUserMediaSampleState extends State<GetUserMediaSample> {
   MediaStream _localStream;
-  final _localRenderer = new RTCVideoRenderer();
+  final _localRenderer = RTCVideoRenderer();
   bool _inCalling = false;
 
   @override
@@ -80,27 +80,27 @@ class _GetUserMediaSampleState extends State<GetUserMediaSample> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: new Text('GetUserMedia API Test'),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('GetUserMedia API Test'),
       ),
-      body: new OrientationBuilder(
+      body: OrientationBuilder(
         builder: (context, orientation) {
-          return new Center(
-            child: new Container(
-              margin: new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+          return Center(
+            child: Container(
+              margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height,
               child: RTCVideoView(_localRenderer),
-              decoration: new BoxDecoration(color: Colors.black54),
+              decoration: BoxDecoration(color: Colors.black54),
             ),
           );
         },
       ),
-      floatingActionButton: new FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: _inCalling ? _hangUp : _makeCall,
         tooltip: _inCalling ? 'Hangup' : 'Call',
-        child: new Icon(_inCalling ? Icons.call_end : Icons.phone),
+        child: Icon(_inCalling ? Icons.call_end : Icons.phone),
       ),
     );
   }

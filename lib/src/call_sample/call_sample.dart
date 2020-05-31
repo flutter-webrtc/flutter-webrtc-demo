@@ -11,15 +11,15 @@ class CallSample extends StatefulWidget {
   CallSample({Key key, @required this.ip}) : super(key: key);
 
   @override
-  _CallSampleState createState() => new _CallSampleState(serverIP: ip);
+  _CallSampleState createState() => _CallSampleState(serverIP: ip);
 }
 
 class _CallSampleState extends State<CallSample> {
   Signaling _signaling;
   List<dynamic> _peers;
   var _selfId;
-  RTCVideoRenderer _localRenderer = new RTCVideoRenderer();
-  RTCVideoRenderer _remoteRenderer = new RTCVideoRenderer();
+  RTCVideoRenderer _localRenderer = RTCVideoRenderer();
+  RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   bool _inCalling = false;
   final String serverIP;
 
@@ -47,7 +47,7 @@ class _CallSampleState extends State<CallSample> {
 
   void _connect() async {
     if (_signaling == null) {
-      _signaling = new Signaling(serverIP)..connect();
+      _signaling = Signaling(serverIP)..connect();
 
       _signaling.onStateChange = (SignalingState state) {
         switch (state) {
@@ -120,9 +120,9 @@ class _CallSampleState extends State<CallSample> {
             ? peer['name'] + '[Your self]'
             : peer['name'] + '[' + peer['user_agent'] + ']'),
         onTap: null,
-        trailing: new SizedBox(
+        trailing: SizedBox(
             width: 100.0,
-            child: new Row(
+            child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   IconButton(
@@ -144,9 +144,9 @@ class _CallSampleState extends State<CallSample> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: new Text('P2P Call Sample'),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('P2P Call Sample'),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.settings),
@@ -157,9 +157,9 @@ class _CallSampleState extends State<CallSample> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _inCalling
-          ? new SizedBox(
+          ? SizedBox(
               width: 200.0,
-              child: new Row(
+              child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     FloatingActionButton(
@@ -169,7 +169,7 @@ class _CallSampleState extends State<CallSample> {
                     FloatingActionButton(
                       onPressed: _hangUp,
                       tooltip: 'Hangup',
-                      child: new Icon(Icons.call_end),
+                      child: Icon(Icons.call_end),
                       backgroundColor: Colors.pink,
                     ),
                     FloatingActionButton(
@@ -180,35 +180,35 @@ class _CallSampleState extends State<CallSample> {
           : null,
       body: _inCalling
           ? OrientationBuilder(builder: (context, orientation) {
-              return new Container(
-                child: new Stack(children: <Widget>[
-                  new Positioned(
+              return Container(
+                child: Stack(children: <Widget>[
+                  Positioned(
                       left: 0.0,
                       right: 0.0,
                       top: 0.0,
                       bottom: 0.0,
-                      child: new Container(
-                        margin: new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+                      child: Container(
+                        margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
                         width: MediaQuery.of(context).size.width,
                         height: MediaQuery.of(context).size.height,
-                        child: new RTCVideoView(_remoteRenderer),
-                        decoration: new BoxDecoration(color: Colors.black54),
+                        child: RTCVideoView(_remoteRenderer),
+                        decoration: BoxDecoration(color: Colors.black54),
                       )),
-                  new Positioned(
+                  Positioned(
                     left: 20.0,
                     top: 20.0,
-                    child: new Container(
+                    child: Container(
                       width: orientation == Orientation.portrait ? 90.0 : 120.0,
                       height:
                           orientation == Orientation.portrait ? 120.0 : 90.0,
-                      child: new RTCVideoView(_localRenderer),
-                      decoration: new BoxDecoration(color: Colors.black54),
+                      child: RTCVideoView(_localRenderer),
+                      decoration: BoxDecoration(color: Colors.black54),
                     ),
                   ),
                 ]),
               );
             })
-          : new ListView.builder(
+          : ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),
               itemCount: (_peers != null ? _peers.length : 0),

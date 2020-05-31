@@ -14,7 +14,7 @@ class DataChannelSample extends StatefulWidget {
   DataChannelSample({Key key, @required this.ip}) : super(key: key);
 
   @override
-  _DataChannelSampleState createState() => new _DataChannelSampleState(serverIP: ip);
+  _DataChannelSampleState createState() => _DataChannelSampleState(serverIP: ip);
 }
 
 class _DataChannelSampleState extends State<DataChannelSample> {
@@ -45,7 +45,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
 
   void _connect() async {
     if (_signaling == null) {
-      _signaling = new Signaling(serverIP)
+      _signaling = Signaling(serverIP)
         ..connect();
 
       _signaling.onDataChannelMessage = (dc, RTCDataChannelMessage data){
@@ -70,7 +70,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
               this.setState(() {
                 _inCalling = true;
               });
-              _timer = new Timer.periodic(Duration(seconds: 1), _handleDataChannelTest);
+              _timer = Timer.periodic(Duration(seconds: 1), _handleDataChannelTest);
               break;
             }
           case SignalingState.CallStateBye:
@@ -142,9 +142,9 @@ class _DataChannelSampleState extends State<DataChannelSample> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: new Text('Data Channel Sample'),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Data Channel Sample'),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.settings),
@@ -157,14 +157,14 @@ class _DataChannelSampleState extends State<DataChannelSample> {
           ? FloatingActionButton(
               onPressed: _hangUp,
               tooltip: 'Hangup',
-              child: new Icon(Icons.call_end),
+              child: Icon(Icons.call_end),
             )
           : null,
-      body: _inCalling? new Center(
-              child: new Container(
+      body: _inCalling? Center(
+              child: Container(
               child:  Text('Recevied => ' + _text),
               ),
-              ) : new ListView.builder(
+              ) : ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),
               itemCount: (_peers != null ? _peers.length : 0),

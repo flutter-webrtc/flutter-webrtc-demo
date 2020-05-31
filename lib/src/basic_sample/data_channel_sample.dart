@@ -7,7 +7,7 @@ class DataChannelSample extends StatefulWidget {
   static String tag = 'data_channel_sample';
 
   @override
-  _DataChannelSampleState createState() => new _DataChannelSampleState();
+  _DataChannelSampleState createState() => _DataChannelSampleState();
 }
 
 class _DataChannelSampleState extends State<DataChannelSample> {
@@ -135,23 +135,23 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   @override
   Widget build(BuildContext context) {
     return
-      new Scaffold(
-        appBar: new AppBar(
-          title: new Text('Data Channel Test'),
+      Scaffold(
+        appBar: AppBar(
+          title: Text('Data Channel Test'),
         ),
-        body: new OrientationBuilder(
+        body: OrientationBuilder(
           builder: (context, orientation) {
-            return new Center(
-              child: new Container(
+            return Center(
+              child: Container(
                 child: _inCalling? Text(_sdp) : Text('data channel test'),
               ),
             );
           },
         ),
-        floatingActionButton: new FloatingActionButton(
+        floatingActionButton: FloatingActionButton(
           onPressed: _inCalling ? _hangUp : _makeCall,
           tooltip: _inCalling ? 'Hangup' : 'Call',
-          child: new Icon(_inCalling ? Icons.call_end : Icons.phone),
+          child: Icon(_inCalling ? Icons.call_end : Icons.phone),
         ),
       );
 

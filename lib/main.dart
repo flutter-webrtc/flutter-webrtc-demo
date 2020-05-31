@@ -46,12 +46,12 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      home: new Scaffold(
-          appBar: new AppBar(
-            title: new Text('Flutter-WebRTC example'),
+    return MaterialApp(
+      home: Scaffold(
+          appBar: AppBar(
+            title: Text('Flutter-WebRTC example'),
           ),
-          body: new ListView.builder(
+          body: ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),
               itemCount: items.length,
@@ -91,7 +91,7 @@ class _MyAppState extends State<MyApp> {
   _showAddressDialog(context) {
     showDemoDialog<DialogDemoAction>(
         context: context,
-        child: new AlertDialog(
+        child: AlertDialog(
             title: const Text('Enter server address:'),
             content: TextField(
               onChanged: (String text) {
@@ -105,12 +105,12 @@ class _MyAppState extends State<MyApp> {
               textAlign: TextAlign.center,
             ),
             actions: <Widget>[
-              new FlatButton(
+              FlatButton(
                   child: const Text('CANCEL'),
                   onPressed: () {
                     Navigator.pop(context, DialogDemoAction.cancel);
                   }),
-              new FlatButton(
+              FlatButton(
                   child: const Text('CONNECT'),
                   onPressed: () {
                     Navigator.pop(context, DialogDemoAction.connect);
@@ -126,8 +126,8 @@ class _MyAppState extends State<MyApp> {
           push: (BuildContext context) {
             Navigator.push(
                 context,
-                new MaterialPageRoute(
-                    builder: (BuildContext context) => new BasicSample()));
+                MaterialPageRoute(
+                    builder: (BuildContext context) => BasicSample()));
           }),
       RouteItem(
           title: 'P2P Call Sample',

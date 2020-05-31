@@ -9,14 +9,14 @@ class LoopBackSample extends StatefulWidget {
   static String tag = 'loopback_sample';
 
   @override
-  _MyAppState createState() => new _MyAppState();
+  _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<LoopBackSample> {
   MediaStream _localStream;
   RTCPeerConnection _peerConnection;
-  final _localRenderer = new RTCVideoRenderer();
-  final _remoteRenderer = new RTCVideoRenderer();
+  final _localRenderer = RTCVideoRenderer();
+  final _remoteRenderer = RTCVideoRenderer();
   bool _inCalling = false;
   Timer _timer;
 
@@ -184,38 +184,38 @@ class _MyAppState extends State<LoopBackSample> {
   Widget build(BuildContext context) {
     return
       new Scaffold(
-        appBar: new AppBar(
-          title: new Text('LoopBack example'),
+        appBar: AppBar(
+          title: Text('LoopBack example'),
         ),
-        body: new OrientationBuilder(
+        body: OrientationBuilder(
           builder: (context, orientation) {
-            return new Center(
-              child: new Container(
-                decoration: new BoxDecoration(color: Colors.white),
-                child: new Stack(
+            return Center(
+              child: Container(
+                decoration: BoxDecoration(color: Colors.white),
+                child: Stack(
                   children: <Widget>[
-                    new Align(
+                    Align(
                       alignment: orientation == Orientation.portrait
                           ? const FractionalOffset(0.5, 0.1)
                           : const FractionalOffset(0.0, 0.5),
-                      child: new Container(
+                      child: Container(
                         margin: new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
                         width: 320.0,
                         height: 240.0,
-                        child: new RTCVideoView(_localRenderer),
-                        decoration: new BoxDecoration(color: Colors.black54),
+                        child: RTCVideoView(_localRenderer),
+                        decoration: BoxDecoration(color: Colors.black54),
                       ),
                     ),
-                    new Align(
+                    Align(
                       alignment: orientation == Orientation.portrait
                           ? const FractionalOffset(0.5, 0.9)
                           : const FractionalOffset(1.0, 0.5),
-                      child: new Container(
-                        margin: new EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+                      child: Container(
+                        margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
                         width: 320.0,
                         height: 240.0,
-                        child: new RTCVideoView(_remoteRenderer),
-                        decoration: new BoxDecoration(color: Colors.black54),
+                        child: RTCVideoView(_remoteRenderer),
+                        decoration: BoxDecoration(color: Colors.black54),
                       ),
                     ),
                   ],
@@ -224,10 +224,10 @@ class _MyAppState extends State<LoopBackSample> {
             );
           },
         ),
-        floatingActionButton: new FloatingActionButton(
+        floatingActionButton: FloatingActionButton(
           onPressed: _inCalling ? _hangUp : _makeCall,
           tooltip: _inCalling ? 'Hangup' : 'Call',
-          child: new Icon(_inCalling ? Icons.call_end : Icons.phone),
+          child: Icon(_inCalling ? Icons.call_end : Icons.phone),
         ),
       );
 
