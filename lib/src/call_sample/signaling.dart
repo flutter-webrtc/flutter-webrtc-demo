@@ -302,7 +302,7 @@ class Signaling {
     };
 
     _socket.onMessage = (message) {
-      print('Recivied data: ' + message);
+      print('Received data: ' + message);
       JsonDecoder decoder = new JsonDecoder();
       this.onMessage(decoder.convert(message));
     };
