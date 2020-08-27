@@ -142,7 +142,8 @@ class _DataChannelSampleState extends State<DataChannelSample> {
         body: OrientationBuilder(
           builder: (context, orientation) {
             return Center(
-              child: Container(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
                 child: _inCalling? Text(_sdp) : Text('data channel test'),
               ),
             );
