@@ -3,7 +3,6 @@ import 'dart:core';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'src/basic_sample/basic_sample.dart';
 import 'src/call_sample/call_sample.dart';
 import 'src/call_sample/data_channel_sample.dart';
 import 'src/route_item.dart';
@@ -120,15 +119,6 @@ class _MyAppState extends State<MyApp> {
 
   _initItems() {
     items = <RouteItem>[
-      RouteItem(
-          title: 'Basic API Tests',
-          subtitle: 'Basic API Tests.',
-          push: (BuildContext context) {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (BuildContext context) => BasicSample()));
-          }),
       RouteItem(
           title: 'P2P Call Sample',
           subtitle: 'P2P Call Sample.',
