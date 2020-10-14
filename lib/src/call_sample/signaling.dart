@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
-import 'package:flutter_webrtc/webrtc.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'random_string.dart';
 
@@ -8,8 +8,7 @@ import '../utils/device_info.dart'
     if (dart.library.js) '../utils/device_info_web.dart';
 import '../utils/websocket.dart'
     if (dart.library.js) '../utils/websocket_web.dart';
-import '../utils/turn.dart'
-    if (dart.library.js) '../utils/turn_web.dart';
+import '../utils/turn.dart' if (dart.library.js) '../utils/turn_web.dart';
 
 enum SignalingState {
   CallStateNew,
@@ -302,7 +301,7 @@ class Signaling {
     };
 
     _socket.onMessage = (message) {
-      print('Recivied data: ' + message);
+      print('Received data: ' + message);
       JsonDecoder decoder = new JsonDecoder();
       this.onMessage(decoder.convert(message));
     };
@@ -333,8 +332,8 @@ class Signaling {
     };
 
     MediaStream stream = user_screen
-        ? await navigator.getDisplayMedia(mediaConstraints)
-        : await navigator.getUserMedia(mediaConstraints);
+        ? await MediaDevices.getDisplayMedia(mediaConstraints)
+        : await MediaDevices.getUserMedia(mediaConstraints);
     if (this.onLocalStream != null) {
       this.onLocalStream(stream);
     }
