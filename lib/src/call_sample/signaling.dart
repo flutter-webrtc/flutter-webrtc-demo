@@ -71,7 +71,7 @@ class Signaling {
     'mandatory': {},
     'optional': [
       {'DtlsSrtpKeyAgreement': true},
-    ],
+    ]
   };
 
   final Map<String, dynamic> _constraints = {
@@ -327,10 +327,48 @@ class Signaling {
     return stream;
   }
 
-  _createPeerConnection(id, media, user_screen) async {
-    if (media != 'data') _localStream = await createStream(media, user_screen);
-    RTCPeerConnection pc = await createPeerConnection(_iceServers, _config);
-    if (media != 'data') pc.addStream(_localStream);
+  _createPeerConnection(String id, String media, bool screenSharing) async {
+    if (media != 'data')
+      _localStream = await createStream(media, screenSharing);
+    RTCPeerConnection pc = await createPeerConnection({
+      ..._iceServers,
+      ...{'sdpSemantics': 'unified-plan'}
+    }, _config);
+    if (media != 'data') {
+      _localStream
+          .getTracks()
+          .forEach((track) => pc.addTrack(track, _localStream));
+
+      /* Unified-Plan: Simuclast
+      await pc.addTransceiver(
+        track: _localStream.getAudioTracks()[0],
+        init: RTCRtpTransceiverInit(
+            direction: TransceiverDirection.SendOnly, streams: [_localStream]),
+      );
+
+      await pc.addTransceiver(
+        track: _localStream.getVideoTracks()[0],
+        init: RTCRtpTransceiverInit(
+            direction: TransceiverDirection.SendOnly,
+            streams: [
+              _localStream
+            ],
+            sendEncodings: [
+              RTCRtpEncoding(rid: 'f'),
+              RTCRtpEncoding(
+                rid: 'h',
+                scaleResolutionDownBy: 2.0,
+                maxBitrateBps: 150000,
+              ),
+              RTCRtpEncoding(
+                rid: 'q',
+                scaleResolutionDownBy: 4.0,
+                maxBitrateBps: 100000,
+              ),
+            ]),
+      );
+      */
+    }
     pc.onIceCandidate = (candidate) {
       if (candidate == null) {
         print('onIceCandidate: complete!');
@@ -350,18 +388,17 @@ class Signaling {
 
     pc.onIceConnectionState = (state) {};
 
-    pc.onAddStream = (stream) {
-      onAddRemoteStream?.call(stream);
-      _remoteStreams.add(stream);
-    };
+    //pc.onAddStream = (stream) {
+    //  onAddRemoteStream?.call(stream);
+    //  _remoteStreams.add(stream);
+    //};
 
-    /* unified-plan
+    // Unified-Plan
     pc.onTrack = (event) {
       if (event.track.kind == 'video') {
         onAddRemoteStream?.call(event.streams[0]);
       }
     };
-    */
 
     pc.onRemoveStream = (stream) {
       this.onRemoveRemoteStream?.call(stream);
@@ -373,7 +410,6 @@ class Signaling {
     pc.onDataChannel = (channel) {
       _addDataChannel(id, channel);
     };
-
     return pc;
   }
 
