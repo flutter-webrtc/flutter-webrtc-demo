@@ -33,7 +33,6 @@ typedef void DataChannelCallback(RTCDataChannel dc);
 
 class Signaling {
   JsonEncoder _encoder = new JsonEncoder();
-  JsonDecoder _decoder = new JsonDecoder();
   String _selfId = randomNumeric(6);
   SimpleWebSocket _socket;
   var _sessionId;
@@ -45,7 +44,7 @@ class Signaling {
   var _turnCredential;
 
   MediaStream _localStream;
-  List<MediaStream> _remoteStreams;
+  List<MediaStream> _remoteStreams = <MediaStream>[];
   SignalingStateCallback onStateChange;
   StreamStateCallback onLocalStream;
   StreamStateCallback onAddRemoteStream;
@@ -114,9 +113,7 @@ class Signaling {
   void invite(String peer_id, String media, use_screen) {
     this._sessionId = this._selfId + '-' + peer_id;
 
-    if (this.onStateChange != null) {
-      this.onStateChange(SignalingState.CallStateNew);
-    }
+    this.onStateChange?.call(SignalingState.CallStateNew);
 
     _createPeerConnection(peer_id, media, use_screen).then((pc) {
       _peerConnections[peer_id] = pc;
@@ -158,9 +155,7 @@ class Signaling {
           var sessionId = data['session_id'];
           this._sessionId = sessionId;
 
-          if (this.onStateChange != null) {
-            this.onStateChange(SignalingState.CallStateNew);
-          }
+          onStateChange?.call(SignalingState.CallStateNew);
 
           var pc = await _createPeerConnection(id, media, false);
           _peerConnections[id] = pc;
@@ -218,9 +213,7 @@ class Signaling {
             pc.close();
           }
           this._sessionId = null;
-          if (this.onStateChange != null) {
-            this.onStateChange(SignalingState.CallStateBye);
-          }
+          this.onStateChange?.call(SignalingState.CallStateBye);
         }
         break;
       case 'bye':
@@ -247,9 +240,7 @@ class Signaling {
           }
 
           this._sessionId = null;
-          if (this.onStateChange != null) {
-            this.onStateChange(SignalingState.CallStateBye);
-          }
+          onStateChange?.call(SignalingState.CallStateBye);
         }
         break;
       case 'keepalive':
@@ -308,9 +299,7 @@ class Signaling {
 
     _socket.onClose = (int code, String reason) {
       print('Closed by server [$code => $reason]!');
-      if (this.onStateChange != null) {
-        this.onStateChange(SignalingState.ConnectionClosed);
-      }
+      onStateChange?.call(SignalingState.ConnectionClosed);
     };
 
     await _socket.connect();
@@ -332,11 +321,9 @@ class Signaling {
     };
 
     MediaStream stream = user_screen
-        ? await MediaDevices.getDisplayMedia(mediaConstraints)
-        : await MediaDevices.getUserMedia(mediaConstraints);
-    if (this.onLocalStream != null) {
-      this.onLocalStream(stream);
-    }
+        ? await navigator.mediaDevices.getDisplayMedia(mediaConstraints)
+        : await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    onLocalStream?.call(stream);
     return stream;
   }
 
@@ -345,6 +332,10 @@ class Signaling {
     RTCPeerConnection pc = await createPeerConnection(_iceServers, _config);
     if (media != 'data') pc.addStream(_localStream);
     pc.onIceCandidate = (candidate) {
+      if (candidate == null) {
+        print('onIceCandidate: complete!');
+        return;
+      }
       _send('candidate', {
         'to': id,
         'from': _selfId,
@@ -360,12 +351,20 @@ class Signaling {
     pc.onIceConnectionState = (state) {};
 
     pc.onAddStream = (stream) {
-      if (this.onAddRemoteStream != null) this.onAddRemoteStream(stream);
-      //_remoteStreams.add(stream);
+      onAddRemoteStream?.call(stream);
+      _remoteStreams.add(stream);
     };
 
+    /* unified-plan
+    pc.onTrack = (event) {
+      if (event.track.kind == 'video') {
+        onAddRemoteStream?.call(event.streams[0]);
+      }
+    };
+    */
+
     pc.onRemoveStream = (stream) {
-      if (this.onRemoveRemoteStream != null) this.onRemoveRemoteStream(stream);
+      this.onRemoveRemoteStream?.call(stream);
       _remoteStreams.removeWhere((it) {
         return (it.id == stream.id);
       });
@@ -381,12 +380,10 @@ class Signaling {
   _addDataChannel(id, RTCDataChannel channel) {
     channel.onDataChannelState = (e) {};
     channel.onMessage = (RTCDataChannelMessage data) {
-      if (this.onDataChannelMessage != null)
-        this.onDataChannelMessage(channel, data);
+      this.onDataChannelMessage?.call(channel, data);
     };
     _dataChannels[id] = channel;
-
-    if (this.onDataChannel != null) this.onDataChannel(channel);
+    onDataChannel?.call(channel);
   }
 
   _createDataChannel(id, RTCPeerConnection pc, {label: 'fileTransfer'}) async {

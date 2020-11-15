@@ -201,7 +201,7 @@ class _CallSampleState extends State<CallSample> {
                       width: orientation == Orientation.portrait ? 90.0 : 120.0,
                       height:
                           orientation == Orientation.portrait ? 120.0 : 90.0,
-                      child: RTCVideoView(_localRenderer),
+                      child: RTCVideoView(_localRenderer, mirror: true),
                       decoration: BoxDecoration(color: Colors.black54),
                     ),
                   ),
