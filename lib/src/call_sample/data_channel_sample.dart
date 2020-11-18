@@ -26,6 +26,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   RTCDataChannel _dataChannel;
   Timer _timer;
   var _text = '';
+  // ignore: unused_element
   _DataChannelSampleState({Key key, @required this.serverIP});
 
   @override

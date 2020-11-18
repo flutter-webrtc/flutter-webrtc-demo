@@ -23,6 +23,7 @@ class _CallSampleState extends State<CallSample> {
   bool _inCalling = false;
   final String serverIP;
 
+  // ignore: unused_element
   _CallSampleState({Key key, @required this.serverIP});
 
   @override
