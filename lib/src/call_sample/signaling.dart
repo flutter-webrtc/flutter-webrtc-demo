@@ -74,15 +74,7 @@ class Signaling {
     ]
   };
 
-  final Map<String, dynamic> _constraints = {
-    'mandatory': {
-      'OfferToReceiveAudio': true,
-      'OfferToReceiveVideo': true,
-    },
-    'optional': [],
-  };
-
-  final Map<String, dynamic> _dc_constraints = {
+  final Map<String, dynamic> _dcConstraints = {
     'mandatory': {
       'OfferToReceiveAudio': false,
       'OfferToReceiveVideo': false,
@@ -312,7 +304,7 @@ class Signaling {
     await _socket.connect();
   }
 
-  Future<MediaStream> createStream(media, user_screen) async {
+  Future<MediaStream> createStream(String media, bool userScreen) async {
     final Map<String, dynamic> mediaConstraints = {
       'audio': true,
       'video': {
@@ -327,7 +319,7 @@ class Signaling {
       }
     };
 
-    MediaStream stream = user_screen
+    MediaStream stream = userScreen
         ? await navigator.mediaDevices.getDisplayMedia(mediaConstraints)
         : await navigator.mediaDevices.getUserMedia(mediaConstraints);
     onLocalStream?.call(stream);
@@ -453,7 +445,7 @@ class Signaling {
   _createOffer(String id, RTCPeerConnection pc, String media) async {
     try {
       RTCSessionDescription s =
-          await pc.createOffer(media == 'data' ? _dc_constraints : {});
+          await pc.createOffer(media == 'data' ? _dcConstraints : {});
       pc.setLocalDescription(s);
       _send('offer', {
         'to': id,
@@ -470,7 +462,7 @@ class Signaling {
   _createAnswer(String id, RTCPeerConnection pc, media) async {
     try {
       RTCSessionDescription s =
-          await pc.createAnswer(media == 'data' ? _dc_constraints : {});
+          await pc.createAnswer(media == 'data' ? _dcConstraints : {});
       pc.setLocalDescription(s);
       _send('answer', {
         'to': id,

@@ -94,9 +94,9 @@ class _CallSampleState extends State<CallSample> {
     }
   }
 
-  _invitePeer(context, peerId, use_screen) async {
+  _invitePeer(BuildContext context, String peerId, bool useScreen) async {
     if (_signaling != null && peerId != _selfId) {
-      _signaling.invite(peerId, 'video', use_screen);
+      _signaling.invite(peerId, 'video', useScreen);
     }
   }
 
