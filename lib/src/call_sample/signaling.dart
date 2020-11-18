@@ -110,17 +110,24 @@ class Signaling {
     }
   }
 
-  void invite(String peer_id, String media, use_screen) {
-    this._sessionId = this._selfId + '-' + peer_id;
+  void muteMic() {
+    if (_localStream != null) {
+      bool enabled = _localStream.getAudioTracks()[0].enabled;
+      _localStream.getAudioTracks()[0].enabled = !enabled;
+    }
+  }
+
+  void invite(String peerId, String media, bool useScreen) {
+    this._sessionId = this._selfId + '-' + peerId;
 
     this.onStateChange?.call(SignalingState.CallStateNew);
 
-    _createPeerConnection(peer_id, media, use_screen).then((pc) {
-      _peerConnections[peer_id] = pc;
+    _createPeerConnection(peerId, media, useScreen).then((pc) {
+      _peerConnections[peerId] = pc;
       if (media == 'data') {
-        _createDataChannel(peer_id, pc);
+        _createDataChannel(peerId, pc);
       }
-      _createOffer(peer_id, pc, media);
+      _createOffer(peerId, pc, media);
     });
   }
 
@@ -339,7 +346,8 @@ class Signaling {
           .getTracks()
           .forEach((track) => pc.addTrack(track, _localStream));
 
-      /* Unified-Plan: Simuclast
+      // Unified-Plan: Simuclast
+      /*
       await pc.addTransceiver(
         track: _localStream.getAudioTracks()[0],
         init: RTCRtpTransceiverInit(
@@ -354,19 +362,32 @@ class Signaling {
               _localStream
             ],
             sendEncodings: [
-              RTCRtpEncoding(rid: 'f'),
+              RTCRtpEncoding(rid: 'f', active: true),
               RTCRtpEncoding(
                 rid: 'h',
+                active: true,
                 scaleResolutionDownBy: 2.0,
-                maxBitrateBps: 150000,
+                maxBitrate: 150000,
               ),
               RTCRtpEncoding(
                 rid: 'q',
+                active: true,
                 scaleResolutionDownBy: 4.0,
-                maxBitrateBps: 100000,
+                maxBitrate: 100000,
               ),
             ]),
-      );
+      );*/
+      /*
+        var sender = pc.getSenders().find(s => s.track.kind == "video");
+        var parameters = sender.getParameters();
+        if(!parameters)
+          parameters = {};
+        parameters.encodings = [
+          { rid: "h", active: true, maxBitrate: 900000 },
+          { rid: "m", active: true, maxBitrate: 300000, scaleResolutionDownBy: 2 },
+          { rid: "l", active: true, maxBitrate: 100000, scaleResolutionDownBy: 4 }
+        ];
+        sender.setParameters(parameters);
       */
     }
     pc.onIceCandidate = (candidate) {
@@ -423,15 +444,16 @@ class Signaling {
   }
 
   _createDataChannel(id, RTCPeerConnection pc, {label: 'fileTransfer'}) async {
-    RTCDataChannelInit dataChannelDict = new RTCDataChannelInit();
+    RTCDataChannelInit dataChannelDict = new RTCDataChannelInit()
+      ..maxRetransmits = 30;
     RTCDataChannel channel = await pc.createDataChannel(label, dataChannelDict);
     _addDataChannel(id, channel);
   }
 
   _createOffer(String id, RTCPeerConnection pc, String media) async {
     try {
-      RTCSessionDescription s = await pc
-          .createOffer(media == 'data' ? _dc_constraints : _constraints);
+      RTCSessionDescription s =
+          await pc.createOffer(media == 'data' ? _dc_constraints : {});
       pc.setLocalDescription(s);
       _send('offer', {
         'to': id,
@@ -447,8 +469,8 @@ class Signaling {
 
   _createAnswer(String id, RTCPeerConnection pc, media) async {
     try {
-      RTCSessionDescription s = await pc
-          .createAnswer(media == 'data' ? _dc_constraints : _constraints);
+      RTCSessionDescription s =
+          await pc.createAnswer(media == 'data' ? _dc_constraints : {});
       pc.setLocalDescription(s);
       _send('answer', {
         'to': id,

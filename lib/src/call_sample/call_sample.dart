@@ -110,7 +110,9 @@ class _CallSampleState extends State<CallSample> {
     _signaling.switchCamera();
   }
 
-  _muteMic() {}
+  _muteMic() {
+    _signaling.muteMic();
+  }
 
   _buildRow(context, peer) {
     var self = (peer['id'] == _selfId);
