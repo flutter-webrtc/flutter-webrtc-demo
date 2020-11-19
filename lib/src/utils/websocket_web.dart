@@ -20,18 +20,18 @@ class SimpleWebSocket {
     try {
       _socket = WebSocket(_url);
       _socket.onOpen.listen((e) {
-        this?.onOpen();
+        onOpen?.call();
       });
 
       _socket.onMessage.listen((e) {
-        this?.onMessage(e.data);
+        onMessage?.call(e.data);
       });
 
       _socket.onClose.listen((e) {
-        this?.onClose(e.code, e.reason);
+        onClose?.call(e.code, e.reason);
       });
     } catch (e) {
-      this?.onClose(500, e.toString());
+      onClose?.call(500, e.toString());
     }
   }
 
@@ -45,6 +45,8 @@ class SimpleWebSocket {
   }
 
   close() {
-    if (_socket != null) _socket.close();
+    if (_socket != null) {
+      _socket.close();
+    }
   }
 }

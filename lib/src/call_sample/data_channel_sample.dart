@@ -66,7 +66,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
         switch (state) {
           case SignalingState.CallStateNew:
             {
-              this.setState(() {
+              setState(() {
                 _inCalling = true;
               });
               _timer =
@@ -75,7 +75,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
             }
           case SignalingState.CallStateBye:
             {
-              this.setState(() {
+              setState(() {
                 _inCalling = false;
               });
               if (_timer != null) {
@@ -97,7 +97,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
       };
 
       _signaling.onPeersUpdate = ((event) {
-        this.setState(() {
+        setState(() {
           _selfId = event['self'];
           _peers = event['peers'];
         });

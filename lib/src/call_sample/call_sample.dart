@@ -53,12 +53,12 @@ class _CallSampleState extends State<CallSample> {
       _signaling.onStateChange = (SignalingState state) {
         switch (state) {
           case SignalingState.CallStateNew:
-            this.setState(() {
+            setState(() {
               _inCalling = true;
             });
             break;
           case SignalingState.CallStateBye:
-            this.setState(() {
+            setState(() {
               _localRenderer.srcObject = null;
               _remoteRenderer.srcObject = null;
               _inCalling = false;
@@ -75,7 +75,7 @@ class _CallSampleState extends State<CallSample> {
       };
 
       _signaling.onPeersUpdate = ((event) {
-        this.setState(() {
+        setState(() {
           _selfId = event['self'];
           _peers = event['peers'];
         });

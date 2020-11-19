@@ -19,14 +19,14 @@ class SimpleWebSocket {
     try {
       //_socket = await WebSocket.connect(_url);
       _socket = await _connectForSelfSignedCert(_url);
-      this?.onOpen();
+      onOpen?.call();
       _socket.listen((data) {
-        this?.onMessage(data);
+        onMessage?.call(data);
       }, onDone: () {
-        this?.onClose(_socket.closeCode, _socket.closeReason);
+        onClose?.call(_socket.closeCode, _socket.closeReason);
       });
     } catch (e) {
-      this.onClose(500, e.toString());
+      onClose?.call(500, e.toString());
     }
   }
 
