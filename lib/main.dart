@@ -23,9 +23,8 @@ class _MyAppState extends State<MyApp> {
   List<RouteItem> items;
   String _server = '';
   SharedPreferences _prefs;
-  bool _datachannel = false;
 
-  String get server => _server ?? 'demo.cloudwebrtc.com';
+  bool _datachannel = false;
   @override
   initState() {
     super.initState();
@@ -64,7 +63,7 @@ class _MyAppState extends State<MyApp> {
   _initData() async {
     _prefs = await SharedPreferences.getInstance();
     setState(() {
-      _server = _prefs.getString('server');
+      _server = _prefs.getString('server') ?? 'demo.cloudwebrtc.com';
     });
   }
 
