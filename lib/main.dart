@@ -23,8 +23,9 @@ class _MyAppState extends State<MyApp> {
   List<RouteItem> items;
   String _server = '';
   SharedPreferences _prefs;
-
   bool _datachannel = false;
+
+  String get server => _server ?? 'demo.cloudwebrtc.com';
   @override
   initState() {
     super.initState();
@@ -63,7 +64,7 @@ class _MyAppState extends State<MyApp> {
   _initData() async {
     _prefs = await SharedPreferences.getInstance();
     setState(() {
-      _server = _prefs.getString('server') ?? 'demo.cloudwebrtc.com';
+      _server = _prefs.getString('server');
     });
   }
 
@@ -80,8 +81,8 @@ class _MyAppState extends State<MyApp> {
               context,
               MaterialPageRoute(
                   builder: (BuildContext context) => _datachannel
-                      ? DataChannelSample(ip: _server)
-                      : CallSample(ip: _server)));
+                      ? DataChannelSample(host: _server)
+                      : CallSample(host: _server)));
         }
       }
     });

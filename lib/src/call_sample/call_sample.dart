@@ -6,12 +6,12 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 class CallSample extends StatefulWidget {
   static String tag = 'call_sample';
 
-  final String ip;
+  final String host;
 
-  CallSample({Key key, @required this.ip}) : super(key: key);
+  CallSample({Key key, @required this.host}) : super(key: key);
 
   @override
-  _CallSampleState createState() => _CallSampleState(serverIP: ip);
+  _CallSampleState createState() => _CallSampleState();
 }
 
 class _CallSampleState extends State<CallSample> {
@@ -21,10 +21,10 @@ class _CallSampleState extends State<CallSample> {
   RTCVideoRenderer _localRenderer = RTCVideoRenderer();
   RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   bool _inCalling = false;
-  final String serverIP;
+  Session _session;
 
   // ignore: unused_element
-  _CallSampleState({Key key, @required this.serverIP});
+  _CallSampleState({Key key});
 
   @override
   initState() {
@@ -48,29 +48,36 @@ class _CallSampleState extends State<CallSample> {
 
   void _connect() async {
     if (_signaling == null) {
-      _signaling = Signaling(serverIP)..connect();
+      _signaling = Signaling(widget.host)..connect();
 
-      _signaling.onStateChange = (SignalingState state) {
+      _signaling.onSignalingStateChange = (SignalingState state) {
         switch (state) {
-          case SignalingState.CallStateNew:
-            setState(() {
-              _inCalling = true;
-            });
-            break;
-          case SignalingState.CallStateBye:
-            setState(() {
-              _localRenderer.srcObject = null;
-              _remoteRenderer.srcObject = null;
-              _inCalling = false;
-            });
-            break;
-          case SignalingState.CallStateInvite:
-          case SignalingState.CallStateConnected:
-          case SignalingState.CallStateRinging:
           case SignalingState.ConnectionClosed:
           case SignalingState.ConnectionError:
           case SignalingState.ConnectionOpen:
             break;
+        }
+      };
+
+      _signaling.onCallStateChange = (Session session, CallState state) {
+        switch (state) {
+          case CallState.CallStateNew:
+            setState(() {
+              _session = session;
+              _inCalling = true;
+            });
+            break;
+          case CallState.CallStateBye:
+            setState(() {
+              _localRenderer.srcObject = null;
+              _remoteRenderer.srcObject = null;
+              _inCalling = false;
+              _session = null;
+            });
+            break;
+          case CallState.CallStateInvite:
+          case CallState.CallStateConnected:
+          case CallState.CallStateRinging:
         }
       };
 
@@ -81,15 +88,15 @@ class _CallSampleState extends State<CallSample> {
         });
       });
 
-      _signaling.onLocalStream = ((stream) {
+      _signaling.onLocalStream = ((_, stream) {
         _localRenderer.srcObject = stream;
       });
 
-      _signaling.onAddRemoteStream = ((stream) {
+      _signaling.onAddRemoteStream = ((_, stream) {
         _remoteRenderer.srcObject = stream;
       });
 
-      _signaling.onRemoveRemoteStream = ((stream) {
+      _signaling.onRemoveRemoteStream = ((_, stream) {
         _remoteRenderer.srcObject = null;
       });
     }
@@ -103,7 +110,7 @@ class _CallSampleState extends State<CallSample> {
 
   _hangUp() {
     if (_signaling != null) {
-      _signaling.bye();
+      _signaling.bye(_session.sid);
     }
   }
 

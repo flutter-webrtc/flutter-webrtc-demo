@@ -8,13 +8,12 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 class DataChannelSample extends StatefulWidget {
   static String tag = 'call_sample';
 
-  final String ip;
+  final String host;
 
-  DataChannelSample({Key key, @required this.ip}) : super(key: key);
+  DataChannelSample({Key key, @required this.host}) : super(key: key);
 
   @override
-  _DataChannelSampleState createState() =>
-      _DataChannelSampleState(serverIP: ip);
+  _DataChannelSampleState createState() => _DataChannelSampleState();
 }
 
 class _DataChannelSampleState extends State<DataChannelSample> {
@@ -22,12 +21,12 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   List<dynamic> _peers;
   var _selfId;
   bool _inCalling = false;
-  final String serverIP;
   RTCDataChannel _dataChannel;
+  Session _session;
   Timer _timer;
   var _text = '';
   // ignore: unused_element
-  _DataChannelSampleState({Key key, @required this.serverIP});
+  _DataChannelSampleState({Key key});
 
   @override
   initState() {
@@ -46,9 +45,9 @@ class _DataChannelSampleState extends State<DataChannelSample> {
 
   void _connect() async {
     if (_signaling == null) {
-      _signaling = Signaling(serverIP)..connect();
+      _signaling = Signaling(widget.host)..connect();
 
-      _signaling.onDataChannelMessage = (dc, RTCDataChannelMessage data) {
+      _signaling.onDataChannelMessage = (_, dc, RTCDataChannelMessage data) {
         setState(() {
           if (data.isBinary) {
             print('Got binary [' + data.binary.toString() + ']');
@@ -58,22 +57,32 @@ class _DataChannelSampleState extends State<DataChannelSample> {
         });
       };
 
-      _signaling.onDataChannel = (channel) {
+      _signaling.onDataChannel = (_, channel) {
         _dataChannel = channel;
       };
 
-      _signaling.onStateChange = (SignalingState state) {
+      _signaling.onSignalingStateChange = (SignalingState state) {
         switch (state) {
-          case SignalingState.CallStateNew:
+          case SignalingState.ConnectionClosed:
+          case SignalingState.ConnectionError:
+          case SignalingState.ConnectionOpen:
+            break;
+        }
+      };
+
+      _signaling.onCallStateChange = (Session session, CallState state) {
+        switch (state) {
+          case CallState.CallStateNew:
             {
               setState(() {
+                _session = session;
                 _inCalling = true;
               });
               _timer =
                   Timer.periodic(Duration(seconds: 1), _handleDataChannelTest);
               break;
             }
-          case SignalingState.CallStateBye:
+          case CallState.CallStateBye:
             {
               setState(() {
                 _inCalling = false;
@@ -83,16 +92,14 @@ class _DataChannelSampleState extends State<DataChannelSample> {
                 _timer = null;
               }
               _dataChannel = null;
+              _inCalling = false;
+              _session = null;
               _text = '';
               break;
             }
-          case SignalingState.CallStateInvite:
-          case SignalingState.CallStateConnected:
-          case SignalingState.CallStateRinging:
-          case SignalingState.ConnectionClosed:
-          case SignalingState.ConnectionError:
-          case SignalingState.ConnectionOpen:
-            break;
+          case CallState.CallStateInvite:
+          case CallState.CallStateConnected:
+          case CallState.CallStateRinging:
         }
       };
 
@@ -126,7 +133,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
 
   _hangUp() {
     if (_signaling != null) {
-      _signaling.bye();
+      _signaling.bye(_session.sid);
     }
   }
 
