@@ -5,7 +5,7 @@ class CallSettings extends StatefulWidget {
   static String tag = 'call_settings';
 
   @override
-  _CallSettingsState createState() => new _CallSettingsState();
+  _CallSettingsState createState() => _CallSettingsState();
 }
 
 class _CallSettingsState extends State<CallSettings> {
@@ -17,7 +17,6 @@ class _CallSettingsState extends State<CallSettings> {
   @override
   deactivate() {
     super.deactivate();
-
   }
 
   @override
@@ -28,9 +27,7 @@ class _CallSettingsState extends State<CallSettings> {
       ),
       body: OrientationBuilder(
         builder: (context, orientation) {
-          return Center(
-            child: Text("settings")
-          );
+          return Center(child: Text("settings"));
         },
       ),
     );

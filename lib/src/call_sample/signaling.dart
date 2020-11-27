@@ -45,14 +45,16 @@ class Session {
 }
 
 class Signaling {
-  JsonEncoder _encoder = new JsonEncoder();
+  Signaling(this._host);
+
+  JsonEncoder _encoder = JsonEncoder();
+  JsonDecoder _decoder = JsonDecoder();
   String _selfId = randomNumeric(6);
   SimpleWebSocket _socket;
   var _host;
   var _port = 8086;
   var _turnCredential;
   Map<String, Session> _sessions = {};
-
   MediaStream _localStream;
   List<MediaStream> _remoteStreams = <MediaStream>[];
 
@@ -94,21 +96,8 @@ class Signaling {
     'optional': [],
   };
 
-  Signaling(this._host);
-
   close() async {
-    if (_localStream != null) {
-      _localStream.getTracks().forEach((element) async {
-        await element.dispose();
-      });
-      await _localStream.dispose();
-      _localStream = null;
-    }
-
-    _sessions.forEach((key, sess) async {
-      await sess.pc.close();
-    });
-    _sessions.clear();
+    await _cleanSessions();
     if (_socket != null) _socket.close();
   }
 
@@ -146,7 +135,7 @@ class Signaling {
       'from': _selfId,
     });
 
-    _stopSession(_sessions[sessionId]);
+    _closeSession(_sessions[sessionId]);
   }
 
   void onMessage(message) async {
@@ -158,7 +147,7 @@ class Signaling {
         {
           List<dynamic> peers = data;
           if (onPeersUpdate != null) {
-            Map<String, dynamic> event = new Map<String, dynamic>();
+            Map<String, dynamic> event = Map<String, dynamic>();
             event['self'] = _selfId;
             event['peers'] = peers;
             onPeersUpdate?.call(event);
@@ -179,8 +168,8 @@ class Signaling {
               media: media,
               screenSharing: false);
           _sessions[sessionId] = newSession;
-          await newSession.pc.setRemoteDescription(new RTCSessionDescription(
-              description['sdp'], description['type']));
+          await newSession.pc.setRemoteDescription(
+              RTCSessionDescription(description['sdp'], description['type']));
           await _createAnswer(newSession, media);
           if (newSession.remoteCandidates.length > 0) {
             newSession.remoteCandidates.forEach((candidate) async {
@@ -196,8 +185,8 @@ class Signaling {
           var description = data['description'];
           var sessionId = data['session_id'];
           var session = _sessions[sessionId];
-          session?.pc?.setRemoteDescription(new RTCSessionDescription(
-              description['sdp'], description['type']));
+          session?.pc?.setRemoteDescription(
+              RTCSessionDescription(description['sdp'], description['type']));
         }
         break;
       case 'candidate':
@@ -206,13 +195,15 @@ class Signaling {
           var candidateMap = data['candidate'];
           var sessionId = data['session_id'];
           var session = _sessions[sessionId];
-          RTCIceCandidate candidate = new RTCIceCandidate(
-              candidateMap['candidate'],
-              candidateMap['sdpMid'],
-              candidateMap['sdpMLineIndex']);
+          RTCIceCandidate candidate = RTCIceCandidate(candidateMap['candidate'],
+              candidateMap['sdpMid'], candidateMap['sdpMLineIndex']);
 
           if (session != null) {
-            await session.pc.addCandidate(candidate);
+            if (session.pc != null) {
+              await session.pc.addCandidate(candidate);
+            } else {
+              session.remoteCandidates.add(candidate);
+            }
           } else {
             _sessions[sessionId] = Session(pid: peerId, sid: sessionId)
               ..remoteCandidates.add(candidate);
@@ -222,7 +213,7 @@ class Signaling {
       case 'leave':
         {
           var peerId = data as String;
-          _cleanSession(peerId);
+          _closeSessionByPeerId(peerId);
         }
         break;
       case 'bye':
@@ -231,7 +222,7 @@ class Signaling {
           print('bye: ' + sessionId);
           var session = _sessions.remove(sessionId);
           onCallStateChange?.call(session, CallState.CallStateBye);
-          _stopSession(session);
+          _closeSession(session);
         }
         break;
       case 'keepalive':
@@ -244,7 +235,7 @@ class Signaling {
     }
   }
 
-  void connect() async {
+  Future<void> connect() async {
     var url = 'https://$_host:$_port/ws';
     _socket = SimpleWebSocket(url);
 
@@ -284,8 +275,7 @@ class Signaling {
 
     _socket.onMessage = (message) {
       print('Received data: ' + message);
-      JsonDecoder decoder = new JsonDecoder();
-      onMessage(decoder.convert(message));
+      onMessage(_decoder.convert(message));
     };
 
     _socket.onClose = (int code, String reason) {
@@ -318,7 +308,7 @@ class Signaling {
     return stream;
   }
 
-  _createSession(
+  Future<Session> _createSession(
       {Session session,
       String peerId,
       String sessionId,
@@ -427,7 +417,7 @@ class Signaling {
     return newSession;
   }
 
-  _addDataChannel(Session session, RTCDataChannel channel) {
+  void _addDataChannel(Session session, RTCDataChannel channel) {
     channel.onDataChannelState = (e) {};
     channel.onMessage = (RTCDataChannelMessage data) {
       onDataChannelMessage?.call(session, channel, data);
@@ -436,15 +426,16 @@ class Signaling {
     onDataChannel?.call(session, channel);
   }
 
-  _createDataChannel(Session session, {label: 'fileTransfer'}) async {
-    RTCDataChannelInit dataChannelDict = new RTCDataChannelInit()
+  Future<void> _createDataChannel(Session session,
+      {label: 'fileTransfer'}) async {
+    RTCDataChannelInit dataChannelDict = RTCDataChannelInit()
       ..maxRetransmits = 30;
     RTCDataChannel channel =
         await session.pc.createDataChannel(label, dataChannelDict);
     _addDataChannel(session, channel);
   }
 
-  _createOffer(Session session, String media) async {
+  Future<void> _createOffer(Session session, String media) async {
     try {
       RTCSessionDescription s =
           await session.pc.createOffer(media == 'data' ? _dcConstraints : {});
@@ -461,7 +452,7 @@ class Signaling {
     }
   }
 
-  _createAnswer(Session session, String media) async {
+  Future<void> _createAnswer(Session session, String media) async {
     try {
       RTCSessionDescription s =
           await session.pc.createAnswer(media == 'data' ? _dcConstraints : {});
@@ -478,24 +469,41 @@ class Signaling {
   }
 
   _send(event, data) {
-    var request = new Map();
+    var request = Map();
     request["type"] = event;
     request["data"] = data;
     _socket.send(_encoder.convert(request));
   }
 
-  _cleanSession(String peerId) {
+  Future<void> _cleanSessions() async {
+    if (_localStream != null) {
+      _localStream.getTracks().forEach((element) async {
+        await element.dispose();
+      });
+      await _localStream.dispose();
+      _localStream = null;
+    }
+    _sessions.forEach((key, sess) async {
+      await sess?.pc?.close();
+      await sess?.dc?.close();
+    });
+    _sessions.clear();
+  }
+
+  void _closeSessionByPeerId(String peerId) {
     var session;
-    _sessions.removeWhere((String key, Session session) {
+    _sessions.removeWhere((String key, Session sess) {
       var ids = key.split('-');
+      session = sess;
       return peerId == ids[0] || peerId == ids[1];
     });
     if (session != null) {
+      _closeSession(session);
       onCallStateChange?.call(session, CallState.CallStateBye);
     }
   }
 
-  void _stopSession(Session session) async {
+  Future<void> _closeSession(Session session) async {
     _localStream?.getTracks()?.forEach((element) async {
       await element.dispose();
     });
