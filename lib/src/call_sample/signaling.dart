@@ -67,6 +67,9 @@ class Signaling {
   DataChannelMessageCallback onDataChannelMessage;
   DataChannelCallback onDataChannel;
 
+  String get sdpSemantics =>
+      WebRTC.platformIsWindows ? 'plan-b' : 'unified-plan';
+
   Map<String, dynamic> _iceServers = {
     'iceServers': [
       {'url': 'stun:stun.l.google.com:19302'},
@@ -320,12 +323,30 @@ class Signaling {
     print(_iceServers);
     RTCPeerConnection pc = await createPeerConnection({
       ..._iceServers,
-      ...{'sdpSemantics': 'unified-plan'}
+      ...{'sdpSemantics': sdpSemantics}
     }, _config);
     if (media != 'data') {
-      _localStream
-          .getTracks()
-          .forEach((track) async => await pc.addTrack(track, _localStream));
+      switch (sdpSemantics) {
+        case 'plan-b':
+          pc.onAddStream = (MediaStream stream) {
+            onAddRemoteStream?.call(newSession, stream);
+            _remoteStreams.add(stream);
+          };
+          await pc.addStream(_localStream);
+          break;
+        case 'unified-plan':
+
+          // Unified-Plan
+          pc.onTrack = (event) {
+            if (event.track.kind == 'video') {
+              onAddRemoteStream?.call(newSession, event.streams[0]);
+            }
+          };
+          _localStream.getTracks().forEach((track) {
+            pc.addTrack(track, _localStream);
+          });
+          break;
+      }
 
       // Unified-Plan: Simuclast
       /*
@@ -389,18 +410,6 @@ class Signaling {
     };
 
     pc.onIceConnectionState = (state) {};
-
-    //pc.onAddStream = (stream) {
-    //  onAddRemoteStream?.call(stream);
-    //  _remoteStreams.add(stream);
-    //};
-
-    // Unified-Plan
-    pc.onTrack = (event) {
-      if (event.track.kind == 'video') {
-        onAddRemoteStream?.call(newSession, event.streams[0]);
-      }
-    };
 
     pc.onRemoveStream = (stream) {
       onRemoveRemoteStream?.call(newSession, stream);
