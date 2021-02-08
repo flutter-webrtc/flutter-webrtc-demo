@@ -106,7 +106,7 @@ class Signaling {
 
   void switchCamera() {
     if (_localStream != null) {
-      _localStream.getVideoTracks()[0].switchCamera();
+      Helper.switchCamera(_localStream.getVideoTracks()[0]);
     }
   }
 
