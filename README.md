@@ -1,4 +1,6 @@
 # flutter-webrtc-demo
+ [![slack](https://img.shields.io/badge/join-us%20on%20slack-gray.svg?longCache=true&logo=slack&colorB=brightgreen)](https://join.slack.com/t/flutterwebrtc/shared_invite/zt-q83o7y1s-FExGLWEvtkPKM8ku_F8cEQ)
+ 
 Flutter WebRTC plugin Demo
 
 Online Demo: https://demo.cloudwebrtc.com:8086/
