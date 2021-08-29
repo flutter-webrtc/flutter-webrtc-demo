@@ -392,21 +392,27 @@ class Signaling {
         sender.setParameters(parameters);
       */
     }
-    pc.onIceCandidate = (candidate) {
+    pc.onIceCandidate = (candidate) async {
       if (candidate == null) {
         print('onIceCandidate: complete!');
         return;
       }
-      _send('candidate', {
-        'to': peerId,
-        'from': _selfId,
-        'candidate': {
-          'sdpMLineIndex': candidate.sdpMlineIndex,
-          'sdpMid': candidate.sdpMid,
-          'candidate': candidate.candidate,
-        },
-        'session_id': sessionId,
-      });
+      // This delay is needed to allow enough time to try an ICE candidate
+      // before skipping to the next one. 1 second is just an heuristic value
+      // and should be thoroughly tested in your own environment.
+      await Future.delayed(
+          const Duration(seconds: 1),
+          () => _send('candidate', {
+            'to': peerId,
+            'from': _selfId,
+            'candidate': {
+              'sdpMLineIndex': candidate.sdpMlineIndex,
+              'sdpMid': candidate.sdpMid,
+              'candidate': candidate.candidate,
+            },
+            'session_id': sessionId,
+          })
+      );
     };
 
     pc.onIceConnectionState = (state) {};
