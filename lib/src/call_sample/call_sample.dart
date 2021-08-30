@@ -136,12 +136,24 @@ class _CallSampleState extends State<CallSample> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   IconButton(
-                    icon: const Icon(Icons.videocam),
+                    icon: Icon(self
+                        ? Icons.close
+                        : Icons.videocam,
+                        color: self
+                            ? Colors.grey
+                            : Colors.black
+                    ),
                     onPressed: () => _invitePeer(context, peer['id'], false),
                     tooltip: 'Video calling',
                   ),
                   IconButton(
-                    icon: const Icon(Icons.screen_share),
+                    icon: Icon(self
+                        ? Icons.close
+                        : Icons.screen_share,
+                        color: self
+                            ? Colors.grey
+                            : Colors.black
+                    ),
                     onPressed: () => _invitePeer(context, peer['id'], true),
                     tooltip: 'Screen sharing',
                   )
