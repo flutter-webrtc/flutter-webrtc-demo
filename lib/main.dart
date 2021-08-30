@@ -20,9 +20,9 @@ enum DialogDemoAction {
 }
 
 class _MyAppState extends State<MyApp> {
-  List<RouteItem> items;
+  List<RouteItem> items = [];
   String _server = '';
-  SharedPreferences _prefs;
+  late SharedPreferences _prefs;
 
   bool _datachannel = false;
   @override
@@ -67,11 +67,12 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void showDemoDialog<T>({BuildContext context, Widget child}) {
+  void showDemoDialog<T>(
+      {required BuildContext context, required Widget child}) {
     showDialog<T>(
       context: context,
       builder: (BuildContext context) => child,
-    ).then<void>((T value) {
+    ).then<void>((T? value) {
       // The value passed to Navigator.pop() or null.
       if (value != null) {
         if (value == DialogDemoAction.connect) {

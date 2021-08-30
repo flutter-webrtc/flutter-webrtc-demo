@@ -1,16 +1,12 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html';
 
-typedef void OnMessageCallback(dynamic msg);
-typedef void OnCloseCallback(int code, String reason);
-typedef void OnOpenCallback();
-
 class SimpleWebSocket {
   String _url;
   var _socket;
-  OnOpenCallback onOpen;
-  OnMessageCallback onMessage;
-  OnCloseCallback onClose;
+  Function()? onOpen;
+  Function(dynamic msg)? onMessage;
+  Function(int code, String reason)? onClose;
 
   SimpleWebSocket(this._url) {
     _url = _url.replaceAll('https:', 'wss:');

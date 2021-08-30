@@ -7,26 +7,24 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class DataChannelSample extends StatefulWidget {
   static String tag = 'call_sample';
-
   final String host;
-
-  DataChannelSample({Key key, @required this.host}) : super(key: key);
+  DataChannelSample({required this.host});
 
   @override
   _DataChannelSampleState createState() => _DataChannelSampleState();
 }
 
 class _DataChannelSampleState extends State<DataChannelSample> {
-  Signaling _signaling;
-  List<dynamic> _peers;
-  var _selfId;
+  Signaling? _signaling;
+  List<dynamic> _peers = [];
+  String? _selfId;
   bool _inCalling = false;
-  RTCDataChannel _dataChannel;
-  Session _session;
-  Timer _timer;
+  RTCDataChannel? _dataChannel;
+  Session? _session;
+  Timer? _timer;
   var _text = '';
   // ignore: unused_element
-  _DataChannelSampleState({Key key});
+  _DataChannelSampleState();
 
   @override
   initState() {
@@ -37,104 +35,90 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   @override
   deactivate() {
     super.deactivate();
-    if (_signaling != null) _signaling.close();
-    if (_timer != null) {
-      _timer.cancel();
-    }
+    _signaling?.close();
+    _timer?.cancel();
   }
 
   void _connect() async {
-    if (_signaling == null) {
-      _signaling = Signaling(widget.host)..connect();
+    _signaling ??= Signaling(widget.host)..connect();
 
-      _signaling.onDataChannelMessage = (_, dc, RTCDataChannelMessage data) {
-        setState(() {
-          if (data.isBinary) {
-            print('Got binary [' + data.binary.toString() + ']');
-          } else {
-            _text = data.text;
-          }
-        });
-      };
-
-      _signaling.onDataChannel = (_, channel) {
-        _dataChannel = channel;
-      };
-
-      _signaling.onSignalingStateChange = (SignalingState state) {
-        switch (state) {
-          case SignalingState.ConnectionClosed:
-          case SignalingState.ConnectionError:
-          case SignalingState.ConnectionOpen:
-            break;
+    _signaling?.onDataChannelMessage = (_, dc, RTCDataChannelMessage data) {
+      setState(() {
+        if (data.isBinary) {
+          print('Got binary [' + data.binary.toString() + ']');
+        } else {
+          _text = data.text;
         }
-      };
-
-      _signaling.onCallStateChange = (Session session, CallState state) {
-        switch (state) {
-          case CallState.CallStateNew:
-            {
-              setState(() {
-                _session = session;
-                _inCalling = true;
-              });
-              _timer =
-                  Timer.periodic(Duration(seconds: 1), _handleDataChannelTest);
-              break;
-            }
-          case CallState.CallStateBye:
-            {
-              setState(() {
-                _inCalling = false;
-              });
-              if (_timer != null) {
-                _timer.cancel();
-                _timer = null;
-              }
-              _dataChannel = null;
-              _inCalling = false;
-              _session = null;
-              _text = '';
-              break;
-            }
-          case CallState.CallStateInvite:
-          case CallState.CallStateConnected:
-          case CallState.CallStateRinging:
-        }
-      };
-
-      _signaling.onPeersUpdate = ((event) {
-        setState(() {
-          _selfId = event['self'];
-          _peers = event['peers'];
-        });
       });
-    }
+    };
+
+    _signaling?.onDataChannel = (_, channel) {
+      _dataChannel = channel;
+    };
+
+    _signaling?.onSignalingStateChange = (SignalingState state) {
+      switch (state) {
+        case SignalingState.ConnectionClosed:
+        case SignalingState.ConnectionError:
+        case SignalingState.ConnectionOpen:
+          break;
+      }
+    };
+
+    _signaling?.onCallStateChange = (Session session, CallState state) {
+      switch (state) {
+        case CallState.CallStateNew:
+          {
+            setState(() {
+              _session = session;
+              _inCalling = true;
+            });
+            _timer =
+                Timer.periodic(Duration(seconds: 1), _handleDataChannelTest);
+            break;
+          }
+        case CallState.CallStateBye:
+          {
+            setState(() {
+              _inCalling = false;
+            });
+            _timer?.cancel();
+            _dataChannel = null;
+            _inCalling = false;
+            _session = null;
+            _text = '';
+            break;
+          }
+        case CallState.CallStateInvite:
+        case CallState.CallStateConnected:
+        case CallState.CallStateRinging:
+      }
+    };
+
+    _signaling?.onPeersUpdate = ((event) {
+      setState(() {
+        _selfId = event['self'];
+        _peers = event['peers'];
+      });
+    });
   }
 
   _handleDataChannelTest(Timer timer) async {
-    if (_dataChannel != null) {
-      String text = 'Say hello ' +
-          timer.tick.toString() +
-          ' times, from [' +
-          _selfId +
-          ']';
-      _dataChannel
-          .send(RTCDataChannelMessage.fromBinary(Uint8List(timer.tick + 1)));
-      _dataChannel.send(RTCDataChannelMessage(text));
-    }
+    String text =
+        'Say hello ' + timer.tick.toString() + ' times, from [$_selfId]';
+    _dataChannel
+        ?.send(RTCDataChannelMessage.fromBinary(Uint8List(timer.tick + 1)));
+    _dataChannel?.send(RTCDataChannelMessage(text));
   }
 
   _invitePeer(context, peerId) async {
-    if (_signaling != null && peerId != _selfId) {
-      _signaling.invite(peerId, 'data', false);
+    if (peerId != _selfId) {
+      _signaling?.invite(peerId, 'data', false);
     }
   }
 
   _hangUp() {
-    if (_signaling != null) {
-      _signaling.bye(_session.sid);
-    }
+    _signaling?.bye(_session!.sid);
   }
 
   _buildRow(context, peer) {

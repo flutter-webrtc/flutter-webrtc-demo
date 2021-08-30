@@ -3,16 +3,12 @@ import 'dart:math';
 import 'dart:convert';
 import 'dart:async';
 
-typedef void OnMessageCallback(dynamic msg);
-typedef void OnCloseCallback(int code, String reason);
-typedef void OnOpenCallback();
-
 class SimpleWebSocket {
   String _url;
   var _socket;
-  OnOpenCallback onOpen;
-  OnMessageCallback onMessage;
-  OnCloseCallback onClose;
+  Function()? onOpen;
+  Function(dynamic msg)? onMessage;
+  Function(int code, String reaso)? onClose;
   SimpleWebSocket(this._url);
 
   connect() async {
