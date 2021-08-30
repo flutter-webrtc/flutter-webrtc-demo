@@ -3,10 +3,13 @@ import 'dart:html' as HTML;
 
 class DeviceInfo {
   static String get label {
-    return 'Flutter Web ( ' + HTML.window.navigator.userAgent + ' )';
+    return 'Flutter Web';
   }
 
   static String get userAgent {
-    return 'flutter-webrtc/web-plugin 0.0.1';
+    return 'flutter-webrtc/web-plugin 0.0.1 ' +
+        ' ( ' +
+        HTML.window.navigator.userAgent +
+        ' )';
   }
 }

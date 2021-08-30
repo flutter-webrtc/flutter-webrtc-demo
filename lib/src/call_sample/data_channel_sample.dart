@@ -126,11 +126,11 @@ class _DataChannelSampleState extends State<DataChannelSample> {
     return ListBody(children: <Widget>[
       ListTile(
         title: Text(self
-            ? peer['name'] + '[Your self]'
-            : peer['name'] + '[' + peer['user_agent'] + ']'),
+            ? peer['name'] + ', ID: ${peer['id']} ' + ' [Your self]'
+            : peer['name'] + ', ID: ${peer['id']} '),
         onTap: () => _invitePeer(context, peer['id']),
         trailing: Icon(Icons.sms),
-        subtitle: Text('id: ' + peer['id']),
+        subtitle: Text('[' + peer['user_agent'] + ']'),
       ),
       Divider()
     ]);
@@ -140,7 +140,8 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Data Channel Sample'),
+        title: Text('Data Channel Sample' +
+            (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.settings),

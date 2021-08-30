@@ -122,8 +122,8 @@ class _CallSampleState extends State<CallSample> {
     return ListBody(children: <Widget>[
       ListTile(
         title: Text(self
-            ? peer['name'] + '[Your self]'
-            : peer['name'] + '[' + peer['user_agent'] + ']'),
+            ? peer['name'] + ', ID: ${peer['id']} ' + ' [Your self]'
+            : peer['name'] + ', ID: ${peer['id']} '),
         onTap: null,
         trailing: SizedBox(
             width: 100.0,
@@ -143,7 +143,7 @@ class _CallSampleState extends State<CallSample> {
                     tooltip: 'Screen sharing',
                   )
                 ])),
-        subtitle: Text('id: ' + peer['id']),
+        subtitle: Text('[' + peer['user_agent'] + ']'),
       ),
       Divider()
     ]);
@@ -153,7 +153,8 @@ class _CallSampleState extends State<CallSample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('P2P Call Sample'),
+        title: Text('P2P Call Sample' +
+            (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.settings),
