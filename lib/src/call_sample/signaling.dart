@@ -120,6 +120,7 @@ class Signaling {
     }
     _createOffer(session, media);
     onCallStateChange?.call(session, CallState.CallStateNew);
+    onCallStateChange?.call(session, CallState.CallStateInvite);
   }
 
   void bye(String sessionId) {
@@ -131,6 +132,22 @@ class Signaling {
     if (sess != null) {
       _closeSession(sess);
     }
+  }
+
+  void accept(String sessionId) {
+    var session = _sessions[sessionId];
+    if (session == null) {
+      return;
+    }
+    _createAnswer(session, 'video');
+  }
+
+  void reject(String sessionId) {
+    var session = _sessions[sessionId];
+    if (session == null) {
+      return;
+    }
+    bye(session.sid);
   }
 
   void onMessage(message) async {
@@ -164,7 +181,8 @@ class Signaling {
           _sessions[sessionId] = newSession;
           await newSession.pc?.setRemoteDescription(
               RTCSessionDescription(description['sdp'], description['type']));
-          await _createAnswer(newSession, media);
+          // await _createAnswer(newSession, media);
+
           if (newSession.remoteCandidates.length > 0) {
             newSession.remoteCandidates.forEach((candidate) async {
               await newSession.pc?.addCandidate(candidate);
@@ -172,6 +190,8 @@ class Signaling {
             newSession.remoteCandidates.clear();
           }
           onCallStateChange?.call(newSession, CallState.CallStateNew);
+
+          onCallStateChange?.call(newSession, CallState.CallStateRinging);
         }
         break;
       case 'answer':
@@ -181,6 +201,7 @@ class Signaling {
           var session = _sessions[sessionId];
           session?.pc?.setRemoteDescription(
               RTCSessionDescription(description['sdp'], description['type']));
+          onCallStateChange?.call(session!, CallState.CallStateConnected);
         }
         break;
       case 'candidate':
@@ -274,7 +295,7 @@ class Signaling {
       onMessage(_decoder.convert(message));
     };
 
-    _socket?.onClose = (int code, String reason) {
+    _socket?.onClose = (int? code, String? reason) {
       print('Closed by server [$code => $reason]!');
       onSignalingStateChange?.call(SignalingState.ConnectionClosed);
     };
@@ -399,7 +420,7 @@ class Signaling {
                 'to': peerId,
                 'from': _selfId,
                 'candidate': {
-                  'sdpMLineIndex': candidate.sdpMlineIndex,
+                  'sdpMLineIndex': candidate.sdpMLineIndex,
                   'sdpMid': candidate.sdpMid,
                   'candidate': candidate.candidate,
                 },
