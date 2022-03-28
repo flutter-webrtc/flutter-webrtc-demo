@@ -21,6 +21,8 @@ class _CallSampleState extends State<CallSample> {
   bool _inCalling = false;
   Session? _session;
 
+  bool _waitAccept = false;
+
   // ignore: unused_element
   _CallSampleState();
 
@@ -55,15 +57,31 @@ class _CallSampleState extends State<CallSample> {
       }
     };
 
-    _signaling?.onCallStateChange = (Session session, CallState state) {
+    _signaling?.onCallStateChange = (Session session, CallState state) async {
       switch (state) {
         case CallState.CallStateNew:
           setState(() {
             _session = session;
-            _inCalling = true;
           });
           break;
+        case CallState.CallStateRinging:
+          bool? accept = await _showAcceptDialog();
+          if (accept!) {
+            _accept();
+            setState(() {
+              _inCalling = true;
+            });
+          }
+          else {
+            _reject();
+          }
+          break;
         case CallState.CallStateBye:
+          if (_waitAccept) {
+            print('peer reject');
+            _waitAccept = false;
+            Navigator.of(context).pop(false);
+          }
           setState(() {
             _localRenderer.srcObject = null;
             _remoteRenderer.srcObject = null;
@@ -72,7 +90,19 @@ class _CallSampleState extends State<CallSample> {
           });
           break;
         case CallState.CallStateInvite:
+          _waitAccept = true;
+          _showInvateDialog();
+          break;
         case CallState.CallStateConnected:
+          if (_waitAccept) {
+            _waitAccept = false;
+            Navigator.of(context).pop(false);
+          }
+          setState(() {
+            _inCalling = true;
+          });
+
+          break;
         case CallState.CallStateRinging:
       }
     };
@@ -97,9 +127,67 @@ class _CallSampleState extends State<CallSample> {
     });
   }
 
+  Future<bool?> _showAcceptDialog() {
+    return showDialog<bool?>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("title"),
+          content: Text("accept?"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("reject"),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: Text("accept"),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool?> _showInvateDialog() {
+    return showDialog<bool?>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("title"),
+          content: Text("waiting"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("cancel"),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+                _hangUp();
+                },
+
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   _invitePeer(BuildContext context, String peerId, bool useScreen) async {
     if (_signaling != null && peerId != _selfId) {
       _signaling?.invite(peerId, 'video', useScreen);
+    }
+  }
+
+  _accept() {
+    if (_session != null) {
+      _signaling?.accept(_session!.sid);
+    }
+  }
+
+  _reject() {
+    if (_session != null) {
+      _signaling?.reject(_session!.sid);
     }
   }
 

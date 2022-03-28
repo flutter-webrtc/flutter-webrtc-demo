@@ -8,7 +8,7 @@ class SimpleWebSocket {
   var _socket;
   Function()? onOpen;
   Function(dynamic msg)? onMessage;
-  Function(int code, String reaso)? onClose;
+  Function(int? code, String? reaso)? onClose;
   SimpleWebSocket(this._url);
 
   connect() async {
