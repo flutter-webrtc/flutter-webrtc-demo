@@ -71,8 +71,7 @@ class _CallSampleState extends State<CallSample> {
             setState(() {
               _inCalling = true;
             });
-          }
-          else {
+          } else {
             _reject();
           }
           break;
@@ -164,8 +163,7 @@ class _CallSampleState extends State<CallSample> {
               onPressed: () {
                 Navigator.of(context).pop(false);
                 _hangUp();
-                },
-
+              },
             ),
           ],
         );
