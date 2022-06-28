@@ -105,12 +105,12 @@ class _MyAppState extends State<MyApp> {
               textAlign: TextAlign.center,
             ),
             actions: <Widget>[
-              FlatButton(
+              TextButton(
                   child: const Text('CANCEL'),
                   onPressed: () {
                     Navigator.pop(context, DialogDemoAction.cancel);
                   }),
-              FlatButton(
+              TextButton(
                   child: const Text('CONNECT'),
                   onPressed: () {
                     Navigator.pop(context, DialogDemoAction.connect);
