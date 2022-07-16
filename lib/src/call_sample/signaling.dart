@@ -24,6 +24,11 @@ enum CallState {
   CallStateBye,
 }
 
+enum VideoSource {
+  Camera,
+  Screen,
+}
+
 class Session {
   Session({required this.sid, required this.pid});
   String pid;
@@ -46,6 +51,8 @@ class Signaling {
   Map<String, Session> _sessions = {};
   MediaStream? _localStream;
   List<MediaStream> _remoteStreams = <MediaStream>[];
+  List<RTCRtpSender> _senders = <RTCRtpSender>[];
+  VideoSource videoSource = VideoSource.Camera;
 
   Function(SignalingState state)? onSignalingStateChange;
   Function(Session session, CallState state)? onCallStateChange;
@@ -57,8 +64,7 @@ class Signaling {
       onDataChannelMessage;
   Function(Session session, RTCDataChannel dc)? onDataChannel;
 
-  String get sdpSemantics =>
-      WebRTC.platformIsWindows ? 'plan-b' : 'unified-plan';
+  String get sdpSemantics => 'unified-plan';
 
   Map<String, dynamic> _iceServers = {
     'iceServers': [
@@ -96,9 +102,35 @@ class Signaling {
 
   void switchCamera() {
     if (_localStream != null) {
-      Helper.switchCamera(_localStream!.getVideoTracks()[0]);
+      if (videoSource != VideoSource.Camera) {
+        switchVideoSource(source: VideoSource.Camera);
+        _senders.forEach((sender) {
+          if (sender.track!.kind == 'video') {
+            sender.replaceTrack(_localStream!.getVideoTracks()[0]);
+          }
+        });
+        videoSource = VideoSource.Camera;
+        onLocalStream?.call(_localStream!);
+      } else {
+        Helper.switchCamera(_localStream!.getVideoTracks()[0]);
+      }
     }
   }
+
+  void switchToScreenSharing(MediaStream stream) {
+    if (_localStream != null && videoSource != VideoSource.Screen) {
+      switchVideoSource(source: VideoSource.Screen);
+      _senders.forEach((sender) {
+        if (sender.track!.kind == 'video') {
+          sender.replaceTrack(stream.getVideoTracks()[0]);
+        }
+      });
+      onLocalStream?.call(stream);
+      videoSource = VideoSource.Screen;
+    }
+  }
+
+  void switchVideoSource({VideoSource source = VideoSource.Camera}) {}
 
   void muteMic() {
     if (_localStream != null) {
@@ -190,7 +222,6 @@ class Signaling {
             newSession.remoteCandidates.clear();
           }
           onCallStateChange?.call(newSession, CallState.CallStateNew);
-
           onCallStateChange?.call(newSession, CallState.CallStateRinging);
         }
         break;
@@ -356,8 +387,8 @@ class Signaling {
               onAddRemoteStream?.call(newSession, event.streams[0]);
             }
           };
-          _localStream!.getTracks().forEach((track) {
-            pc.addTrack(track, _localStream!);
+          _localStream!.getTracks().forEach((track) async {
+            _senders.add(await pc.addTrack(track, _localStream!));
           });
           break;
       }
