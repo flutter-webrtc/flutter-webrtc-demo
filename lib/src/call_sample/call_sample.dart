@@ -207,33 +207,38 @@ class _CallSampleState extends State<CallSample> {
   }
 
   Future<void> selectScreenSourceDialog(BuildContext context) async {
-    final source = await showDialog<DesktopCapturerSource>(
-      context: context,
-      builder: (context) => ScreenSelectDialog(),
-    );
-    if (source != null) {
-      try {
-        var stream =
-            await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
-          'video': {
-            'deviceId': {'exact': source.id},
-            'mandatory': {'frameRate': 30.0}
-          }
-        });
-        stream.getVideoTracks()[0].onEnded = () {
-          print(
-              'By adding a listener on onEnded you can: 1) catch stop video sharing on Web');
-        };
-        _signaling?.switchToScreenSharing(stream);
-      } catch (e) {
-        print(e);
+    MediaStream? screenStream;
+    if (WebRTC.platformIsDesktop) {
+      final source = await showDialog<DesktopCapturerSource>(
+        context: context,
+        builder: (context) => ScreenSelectDialog(),
+      );
+      if (source != null) {
+        try {
+          var stream =
+              await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
+            'video': {
+              'deviceId': {'exact': source.id},
+              'mandatory': {'frameRate': 30.0}
+            }
+          });
+          stream.getVideoTracks()[0].onEnded = () {
+            print(
+                'By adding a listener on onEnded you can: 1) catch stop video sharing on Web');
+          };
+          screenStream = stream;
+        } catch (e) {
+          print(e);
+        }
       }
-      //await _makeCall(source);
+    } else if (WebRTC.platformIsWeb) {
+      screenStream =
+          await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
+        'audio': false,
+        'video': true,
+      });
     }
-  }
-
-  _switchScreenSharing() {
-    //_signaling?.switchToScreenSharing();
+    if (screenStream != null) _signaling?.switchToScreenSharing(screenStream);
   }
 
   _muteMic() {

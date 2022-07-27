@@ -52,7 +52,7 @@ class Signaling {
   MediaStream? _localStream;
   List<MediaStream> _remoteStreams = <MediaStream>[];
   List<RTCRtpSender> _senders = <RTCRtpSender>[];
-  VideoSource videoSource = VideoSource.Camera;
+  VideoSource _videoSource = VideoSource.Camera;
 
   Function(SignalingState state)? onSignalingStateChange;
   Function(Session session, CallState state)? onCallStateChange;
@@ -102,14 +102,13 @@ class Signaling {
 
   void switchCamera() {
     if (_localStream != null) {
-      if (videoSource != VideoSource.Camera) {
-        switchVideoSource(source: VideoSource.Camera);
+      if (_videoSource != VideoSource.Camera) {
         _senders.forEach((sender) {
           if (sender.track!.kind == 'video') {
             sender.replaceTrack(_localStream!.getVideoTracks()[0]);
           }
         });
-        videoSource = VideoSource.Camera;
+        _videoSource = VideoSource.Camera;
         onLocalStream?.call(_localStream!);
       } else {
         Helper.switchCamera(_localStream!.getVideoTracks()[0]);
@@ -118,19 +117,16 @@ class Signaling {
   }
 
   void switchToScreenSharing(MediaStream stream) {
-    if (_localStream != null && videoSource != VideoSource.Screen) {
-      switchVideoSource(source: VideoSource.Screen);
+    if (_localStream != null && _videoSource != VideoSource.Screen) {
       _senders.forEach((sender) {
         if (sender.track!.kind == 'video') {
           sender.replaceTrack(stream.getVideoTracks()[0]);
         }
       });
       onLocalStream?.call(stream);
-      videoSource = VideoSource.Screen;
+      _videoSource = VideoSource.Screen;
     }
   }
-
-  void switchVideoSource({VideoSource source = VideoSource.Camera}) {}
 
   void muteMic() {
     if (_localStream != null) {
@@ -571,5 +567,7 @@ class Signaling {
 
     await session.pc?.close();
     await session.dc?.close();
+    _senders.clear();
+    _videoSource = VideoSource.Camera;
   }
 }
