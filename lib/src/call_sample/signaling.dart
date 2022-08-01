@@ -335,7 +335,7 @@ class Signaling {
       'audio': userScreen ? false : true,
       'video': userScreen
           ? true
-          : {
+          : false /*{
               'mandatory': {
                 'minWidth':
                     '640', // Provide your own width, height and frame rate here
@@ -344,7 +344,7 @@ class Signaling {
               },
               'facingMode': 'user',
               'optional': [],
-            }
+            }*/
     };
 
     MediaStream stream = userScreen
@@ -386,6 +386,12 @@ class Signaling {
           _localStream!.getTracks().forEach((track) async {
             _senders.add(await pc.addTrack(track, _localStream!));
           });
+          if (_localStream!.getVideoTracks().isEmpty) {
+            pc.addTransceiver(
+                kind: RTCRtpMediaType.RTCRtpMediaTypeVideo,
+                init: RTCRtpTransceiverInit(
+                    direction: TransceiverDirection.RecvOnly));
+          }
           break;
       }
 
