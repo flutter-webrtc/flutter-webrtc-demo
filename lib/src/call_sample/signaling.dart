@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
+import '../utils/screen_select_dialog.dart';
 import 'random_string.dart';
 
 import '../utils/device_info.dart'
@@ -34,12 +36,13 @@ class Session {
 }
 
 class Signaling {
-  Signaling(this._host);
+  Signaling(this._host, this._context);
 
   JsonEncoder _encoder = JsonEncoder();
   JsonDecoder _decoder = JsonDecoder();
   String _selfId = randomNumeric(6);
   SimpleWebSocket? _socket;
+  BuildContext? _context;
   var _host;
   var _port = 8086;
   var _turnCredential;
@@ -303,7 +306,8 @@ class Signaling {
     await _socket?.connect();
   }
 
-  Future<MediaStream> createStream(String media, bool userScreen) async {
+  Future<MediaStream> createStream(String media, bool userScreen,
+      {BuildContext? context}) async {
     final Map<String, dynamic> mediaConstraints = {
       'audio': userScreen ? false : true,
       'video': userScreen
@@ -319,22 +323,43 @@ class Signaling {
               'optional': [],
             }
     };
+    late MediaStream stream;
+    if (userScreen) {
+      if (WebRTC.platformIsDesktop) {
+        final source = await showDialog<DesktopCapturerSource>(
+          context: context!,
+          builder: (context) => ScreenSelectDialog(),
+        );
+        stream = await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
+          'video': source == null
+              ? true
+              : {
+                  'deviceId': {'exact': source.id},
+                  'mandatory': {'frameRate': 30.0}
+                }
+        });
+      } else {
+        stream = await navigator.mediaDevices.getDisplayMedia(mediaConstraints);
+      }
+    } else {
+      stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    }
 
-    MediaStream stream = userScreen
-        ? await navigator.mediaDevices.getDisplayMedia(mediaConstraints)
-        : await navigator.mediaDevices.getUserMedia(mediaConstraints);
     onLocalStream?.call(stream);
     return stream;
   }
 
-  Future<Session> _createSession(Session? session,
-      {required String peerId,
-      required String sessionId,
-      required String media,
-      required bool screenSharing}) async {
+  Future<Session> _createSession(
+    Session? session, {
+    required String peerId,
+    required String sessionId,
+    required String media,
+    required bool screenSharing,
+  }) async {
     var newSession = session ?? Session(sid: sessionId, pid: peerId);
     if (media != 'data')
-      _localStream = await createStream(media, screenSharing);
+      _localStream =
+          await createStream(media, screenSharing, context: _context);
     print(_iceServers);
     RTCPeerConnection pc = await createPeerConnection({
       ..._iceServers,

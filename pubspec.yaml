@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.3
-  flutter_webrtc: ^0.8.3
+  flutter_webrtc: ^0.9.7
   shared_preferences: ^2.0.7
   http: ^0.13.3
   path_provider: ^2.0.2
