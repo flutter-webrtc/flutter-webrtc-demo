@@ -21,7 +21,7 @@ class _CallSampleState extends State<CallSample> {
   RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   bool _inCalling = false;
   Session? _session;
-
+  DesktopCapturerSource? selected_source_;
   bool _waitAccept = false;
 
   // ignore: unused_element
@@ -31,7 +31,7 @@ class _CallSampleState extends State<CallSample> {
   initState() {
     super.initState();
     initRenderers();
-    _connect();
+    _connect(context);
   }
 
   initRenderers() async {
@@ -47,8 +47,8 @@ class _CallSampleState extends State<CallSample> {
     _remoteRenderer.dispose();
   }
 
-  void _connect() async {
-    _signaling ??= Signaling(widget.host)..connect();
+  void _connect(BuildContext context) async {
+    _signaling ??= Signaling(widget.host, context)..connect();
     _signaling?.onSignalingStateChange = (SignalingState state) {
       switch (state) {
         case SignalingState.ConnectionClosed:

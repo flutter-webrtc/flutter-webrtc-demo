@@ -29,7 +29,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   @override
   initState() {
     super.initState();
-    _connect();
+    _connect(context);
   }
 
   @override
@@ -39,8 +39,8 @@ class _DataChannelSampleState extends State<DataChannelSample> {
     _timer?.cancel();
   }
 
-  void _connect() async {
-    _signaling ??= Signaling(widget.host)..connect();
+  void _connect(BuildContext context) async {
+    _signaling ??= Signaling(widget.host, context)..connect();
 
     _signaling?.onDataChannelMessage = (_, dc, RTCDataChannelMessage data) {
       setState(() {
