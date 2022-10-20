@@ -494,7 +494,7 @@ class Signaling {
     try {
       RTCSessionDescription s =
           await session.pc!.createOffer(media == 'data' ? _dcConstraints : {});
-      await session.pc!.setLocalDescription(s);
+      await session.pc!.setLocalDescription(_fixSdp(s));
       _send('offer', {
         'to': session.pid,
         'from': _selfId,
@@ -507,11 +507,18 @@ class Signaling {
     }
   }
 
+  RTCSessionDescription _fixSdp(RTCSessionDescription s) {
+    var sdp = s.sdp;
+    s.sdp =
+        sdp!.replaceAll('profile-level-id=640c1f', 'profile-level-id=42e032');
+    return s;
+  }
+
   Future<void> _createAnswer(Session session, String media) async {
     try {
       RTCSessionDescription s =
           await session.pc!.createAnswer(media == 'data' ? _dcConstraints : {});
-      await session.pc!.setLocalDescription(s);
+      await session.pc!.setLocalDescription(_fixSdp(s));
       _send('answer', {
         'to': session.pid,
         'from': _selfId,
