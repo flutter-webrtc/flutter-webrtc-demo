@@ -26,6 +26,11 @@ enum CallState {
   CallStateBye,
 }
 
+enum VideoSource {
+  Camera,
+  Screen,
+}
+
 class Session {
   Session({required this.sid, required this.pid});
   String pid;
@@ -49,6 +54,8 @@ class Signaling {
   Map<String, Session> _sessions = {};
   MediaStream? _localStream;
   List<MediaStream> _remoteStreams = <MediaStream>[];
+  List<RTCRtpSender> _senders = <RTCRtpSender>[];
+  VideoSource _videoSource = VideoSource.Camera;
 
   Function(SignalingState state)? onSignalingStateChange;
   Function(Session session, CallState state)? onCallStateChange;
@@ -60,8 +67,7 @@ class Signaling {
       onDataChannelMessage;
   Function(Session session, RTCDataChannel dc)? onDataChannel;
 
-  String get sdpSemantics =>
-      WebRTC.platformIsWindows ? 'plan-b' : 'unified-plan';
+  String get sdpSemantics => 'unified-plan';
 
   Map<String, dynamic> _iceServers = {
     'iceServers': [
@@ -99,7 +105,29 @@ class Signaling {
 
   void switchCamera() {
     if (_localStream != null) {
-      Helper.switchCamera(_localStream!.getVideoTracks()[0]);
+      if (_videoSource != VideoSource.Camera) {
+        _senders.forEach((sender) {
+          if (sender.track!.kind == 'video') {
+            sender.replaceTrack(_localStream!.getVideoTracks()[0]);
+          }
+        });
+        _videoSource = VideoSource.Camera;
+        onLocalStream?.call(_localStream!);
+      } else {
+        Helper.switchCamera(_localStream!.getVideoTracks()[0]);
+      }
+    }
+  }
+
+  void switchToScreenSharing(MediaStream stream) {
+    if (_localStream != null && _videoSource != VideoSource.Screen) {
+      _senders.forEach((sender) {
+        if (sender.track!.kind == 'video') {
+          sender.replaceTrack(stream.getVideoTracks()[0]);
+        }
+      });
+      onLocalStream?.call(stream);
+      _videoSource = VideoSource.Screen;
     }
   }
 
@@ -193,7 +221,6 @@ class Signaling {
             newSession.remoteCandidates.clear();
           }
           onCallStateChange?.call(newSession, CallState.CallStateNew);
-
           onCallStateChange?.call(newSession, CallState.CallStateRinging);
         }
         break;
@@ -381,8 +408,8 @@ class Signaling {
               onAddRemoteStream?.call(newSession, event.streams[0]);
             }
           };
-          _localStream!.getTracks().forEach((track) {
-            pc.addTrack(track, _localStream!);
+          _localStream!.getTracks().forEach((track) async {
+            _senders.add(await pc.addTrack(track, _localStream!));
           });
           break;
       }
@@ -492,7 +519,7 @@ class Signaling {
     try {
       RTCSessionDescription s =
           await session.pc!.createOffer(media == 'data' ? _dcConstraints : {});
-      await session.pc!.setLocalDescription(s);
+      await session.pc!.setLocalDescription(_fixSdp(s));
       _send('offer', {
         'to': session.pid,
         'from': _selfId,
@@ -505,11 +532,18 @@ class Signaling {
     }
   }
 
+  RTCSessionDescription _fixSdp(RTCSessionDescription s) {
+    var sdp = s.sdp;
+    s.sdp =
+        sdp!.replaceAll('profile-level-id=640c1f', 'profile-level-id=42e032');
+    return s;
+  }
+
   Future<void> _createAnswer(Session session, String media) async {
     try {
       RTCSessionDescription s =
           await session.pc!.createAnswer(media == 'data' ? _dcConstraints : {});
-      await session.pc!.setLocalDescription(s);
+      await session.pc!.setLocalDescription(_fixSdp(s));
       _send('answer', {
         'to': session.pid,
         'from': _selfId,
@@ -565,5 +599,7 @@ class Signaling {
 
     await session.pc?.close();
     await session.dc?.close();
+    _senders.clear();
+    _videoSource = VideoSource.Camera;
   }
 }

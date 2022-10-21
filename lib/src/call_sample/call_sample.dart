@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:core';
+import '../widgets/screen_select_dialog.dart';
 import 'signaling.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
@@ -136,15 +137,19 @@ class _CallSampleState extends State<CallSample> {
           title: Text("title"),
           content: Text("accept?"),
           actions: <Widget>[
-            TextButton(
-              child: Text("reject"),
+            MaterialButton(
+              child: Text(
+                'Reject',
+                style: TextStyle(color: Colors.red),
+              ),
               onPressed: () => Navigator.of(context).pop(false),
             ),
-            TextButton(
-              child: Text("accept"),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
+            MaterialButton(
+              child: Text(
+                'Accept',
+                style: TextStyle(color: Colors.green),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
             ),
           ],
         );
@@ -201,6 +206,41 @@ class _CallSampleState extends State<CallSample> {
     _signaling?.switchCamera();
   }
 
+  Future<void> selectScreenSourceDialog(BuildContext context) async {
+    MediaStream? screenStream;
+    if (WebRTC.platformIsDesktop) {
+      final source = await showDialog<DesktopCapturerSource>(
+        context: context,
+        builder: (context) => ScreenSelectDialog(),
+      );
+      if (source != null) {
+        try {
+          var stream =
+              await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
+            'video': {
+              'deviceId': {'exact': source.id},
+              'mandatory': {'frameRate': 30.0}
+            }
+          });
+          stream.getVideoTracks()[0].onEnded = () {
+            print(
+                'By adding a listener on onEnded you can: 1) catch stop video sharing on Web');
+          };
+          screenStream = stream;
+        } catch (e) {
+          print(e);
+        }
+      }
+    } else if (WebRTC.platformIsWeb) {
+      screenStream =
+          await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
+        'audio': false,
+        'video': true,
+      });
+    }
+    if (screenStream != null) _signaling?.switchToScreenSharing(screenStream);
+  }
+
   _muteMic() {
     _signaling?.muteMic();
   }
@@ -254,13 +294,19 @@ class _CallSampleState extends State<CallSample> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _inCalling
           ? SizedBox(
-              width: 200.0,
+              width: 240.0,
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     FloatingActionButton(
                       child: const Icon(Icons.switch_camera),
+                      tooltip: 'Camera',
                       onPressed: _switchCamera,
+                    ),
+                    FloatingActionButton(
+                      child: const Icon(Icons.desktop_mac),
+                      tooltip: 'Screen Sharing',
+                      onPressed: () => selectScreenSourceDialog(context),
                     ),
                     FloatingActionButton(
                       onPressed: _hangUp,
@@ -270,6 +316,7 @@ class _CallSampleState extends State<CallSample> {
                     ),
                     FloatingActionButton(
                       child: const Icon(Icons.mic_off),
+                      tooltip: 'Mute Mic',
                       onPressed: _muteMic,
                     )
                   ]))
