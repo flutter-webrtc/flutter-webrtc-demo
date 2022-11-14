@@ -12,6 +12,7 @@ Online Demo: https://demo.cloudwebrtc.com:8086/
 - `flutter run`
 ## Note
 - If you want to test `P2P Call Sample`, please use the [webrtc-flutter-server](https://github.com/cloudwebrtc/flutter-webrtc-server), and enter your server address into the example app.
+- Required: Android NDK and CMake: NDK Version: 23.2.8568313
 
 ## screenshots
 # iOS
