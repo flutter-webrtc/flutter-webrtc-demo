@@ -165,12 +165,12 @@ class Signaling {
     }
   }
 
-  void accept(String sessionId) {
+  void accept(String sessionId, String media) {
     var session = _sessions[sessionId];
     if (session == null) {
       return;
     }
-    _createAnswer(session, 'video');
+    _createAnswer(session, media);
   }
 
   void reject(String sessionId) {
