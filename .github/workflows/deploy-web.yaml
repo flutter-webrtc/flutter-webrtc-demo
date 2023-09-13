@@ -1,0 +1,31 @@
+name: deploy web on github-page
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    name: Build Web
+    env:
+      my_secret: ${{secrets.commit_secret}}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - run: flutter config --enable-web
+      - run: flutter clean
+      - run: flutter pub get
+      - run: flutter build web --release --web-renderer html --base-href /flutter-webrtc-demo/
+      - run: |
+          cd build/web
+          git init
+          git config --global user.email duanweiwei1982@gmail.com
+          git config --global user.name cloudwebrtc
+          git status
+          git remote add origin https://${{secrets.commit_secret}}@github.com/flutter-webrtc/flutter-webrtc-demo.git
+          git checkout -b gh-pages
+          git add --all
+          git commit -m "update"
+          git push origin gh-pages -f
