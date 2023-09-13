@@ -3,7 +3,7 @@
  
 Flutter WebRTC plugin Demo
 
-Online Demo: https://demo.cloudwebrtc.com:8086/
+Online Demo: https://flutter-webrtc.github.io/flutter-webrtc-demo/
 
 ## Usage
 - `git clone https://github.com/cloudwebrtc/flutter-webrtc-demo`
