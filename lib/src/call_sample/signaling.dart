@@ -212,7 +212,7 @@ class Signaling {
           _sessions[sessionId] = newSession;
           await newSession.pc?.setRemoteDescription(
               RTCSessionDescription(description['sdp'], description['type']));
-          // await _createAnswer(newSession, media);
+          if (media == 'data') await _createAnswer(newSession, media);
 
           if (newSession.remoteCandidates.length > 0) {
             newSession.remoteCandidates.forEach((candidate) async {

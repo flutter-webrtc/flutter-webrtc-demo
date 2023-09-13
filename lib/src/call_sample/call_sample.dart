@@ -281,8 +281,7 @@ class _CallSampleState extends State<CallSample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('P2P Call Sample' +
-            (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
+        title: Text('' + (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.settings),

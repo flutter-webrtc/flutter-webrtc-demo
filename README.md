@@ -12,6 +12,10 @@ Online Demo: https://flutter-webrtc.github.io/flutter-webrtc-demo/
 - `flutter run`
 ## Note
 - If you want to test `P2P Call Sample`, please use the [webrtc-flutter-server](https://github.com/cloudwebrtc/flutter-webrtc-server), and enter your server address into the example app.
+## Requirement
+- Android NDK 23.2.8568313
+- CMake
+- Flutter 3.3.0
 
 ## screenshots
 # iOS

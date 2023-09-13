@@ -223,8 +223,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Data Channel Sample' +
-            (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
+        title: Text('' + (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.settings),
