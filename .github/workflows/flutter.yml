@@ -6,7 +6,6 @@ on:
       - dev
       - master
       - action_test
-      - fix-ci
 
 jobs:
   test:
