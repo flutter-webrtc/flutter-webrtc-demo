@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
 import 'dart:core';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+
 import '../widgets/screen_select_dialog.dart';
 import 'signaling.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class CallSample extends StatefulWidget {
   static String tag = 'call_sample';
@@ -103,7 +105,6 @@ class _CallSampleState extends State<CallSample> {
           });
 
           break;
-        case CallState.CallStateRinging:
       }
     };
 
@@ -354,7 +355,7 @@ class _CallSampleState extends State<CallSample> {
           : ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),
-              itemCount: (_peers != null ? _peers.length : 0),
+              itemCount: _peers.length,
               itemBuilder: (context, i) {
                 return _buildRow(context, _peers[i]);
               }),
