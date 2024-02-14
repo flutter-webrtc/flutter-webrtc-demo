@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
-import 'dart:core';
 import 'dart:async';
+import 'dart:core';
 import 'dart:typed_data';
-import 'signaling.dart';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+
+import 'signaling.dart';
 
 class DataChannelSample extends StatefulWidget {
   static String tag = 'call_sample';
@@ -249,10 +251,11 @@ class _DataChannelSampleState extends State<DataChannelSample> {
           : ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),
-              itemCount: (_peers != null ? _peers.length : 0),
+              itemCount: _peers.length,
               itemBuilder: (context, i) {
                 return _buildRow(context, _peers[i]);
-              }),
+              },
+            ),
     );
   }
 }

@@ -1,16 +1,16 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
-import '../utils/screen_select_dialog.dart';
-import 'random_string.dart';
-
 import '../utils/device_info.dart'
     if (dart.library.js) '../utils/device_info_web.dart';
+import '../utils/screen_select_dialog.dart';
+import '../utils/turn.dart' if (dart.library.js) '../utils/turn_web.dart';
 import '../utils/websocket.dart'
     if (dart.library.js) '../utils/websocket_web.dart';
-import '../utils/turn.dart' if (dart.library.js) '../utils/turn_web.dart';
+import 'random_string.dart';
 
 enum SignalingState {
   ConnectionOpen,
@@ -459,25 +459,22 @@ class Signaling {
       */
     }
     pc.onIceCandidate = (candidate) async {
-      if (candidate == null) {
-        print('onIceCandidate: complete!');
-        return;
-      }
-      // This delay is needed to allow enough time to try an ICE candidate
-      // before skipping to the next one. 1 second is just an heuristic value
-      // and should be thoroughly tested in your own environment.
       await Future.delayed(
-          const Duration(seconds: 1),
-          () => _send('candidate', {
-                'to': peerId,
-                'from': _selfId,
-                'candidate': {
-                  'sdpMLineIndex': candidate.sdpMLineIndex,
-                  'sdpMid': candidate.sdpMid,
-                  'candidate': candidate.candidate,
-                },
-                'session_id': sessionId,
-              }));
+        const Duration(seconds: 1),
+        () => _send(
+          'candidate',
+          {
+            'to': peerId,
+            'from': _selfId,
+            'candidate': {
+              'sdpMLineIndex': candidate.sdpMLineIndex,
+              'sdpMid': candidate.sdpMid,
+              'candidate': candidate.candidate,
+            },
+            'session_id': sessionId,
+          },
+        ),
+      );
     };
 
     pc.onIceConnectionState = (state) {};
@@ -507,7 +504,7 @@ class Signaling {
   }
 
   Future<void> _createDataChannel(Session session,
-      {label: 'fileTransfer'}) async {
+      {label = 'fileTransfer'}) async {
     RTCDataChannelInit dataChannelDict = RTCDataChannelInit()
       ..maxRetransmits = 30;
     RTCDataChannel channel =
