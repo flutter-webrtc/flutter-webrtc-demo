@@ -98,6 +98,7 @@ class ScreenSelectDialog extends Dialog {
       _stateSetter?.call(() {});
     }));
   }
+
   final Map<String, DesktopCapturerSource> _sources = {};
   SourceType _sourceType = SourceType.Screen;
   DesktopCapturerSource? _selected_source;
@@ -276,7 +277,7 @@ class ScreenSelectDialog extends Dialog {
             ),
             Container(
               width: double.infinity,
-              child: ButtonBar(
+              child: OverflowBar(
                 children: <Widget>[
                   MaterialButton(
                     child: Text(
