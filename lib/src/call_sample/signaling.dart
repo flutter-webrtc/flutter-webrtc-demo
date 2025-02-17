@@ -33,6 +33,7 @@ enum VideoSource {
 
 class Session {
   Session({required this.sid, required this.pid});
+
   String pid;
   String sid;
   RTCPeerConnection? pc;
@@ -459,10 +460,6 @@ class Signaling {
       */
     }
     pc.onIceCandidate = (candidate) async {
-      if (candidate == null) {
-        print('onIceCandidate: complete!');
-        return;
-      }
       // This delay is needed to allow enough time to try an ICE candidate
       // before skipping to the next one. 1 second is just an heuristic value
       // and should be thoroughly tested in your own environment.
@@ -507,7 +504,7 @@ class Signaling {
   }
 
   Future<void> _createDataChannel(Session session,
-      {label: 'fileTransfer'}) async {
+      {label = 'fileTransfer'}) async {
     RTCDataChannelInit dataChannelDict = RTCDataChannelInit()
       ..maxRetransmits = 30;
     RTCDataChannel channel =

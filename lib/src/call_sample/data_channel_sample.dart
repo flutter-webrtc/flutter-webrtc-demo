@@ -8,6 +8,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 class DataChannelSample extends StatefulWidget {
   static String tag = 'call_sample';
   final String host;
+
   DataChannelSample({required this.host});
 
   @override
@@ -23,8 +24,10 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   Session? _session;
   Timer? _timer;
   var _text = '';
+
   // ignore: unused_element
   _DataChannelSampleState();
+
   bool _waitAccept = false;
 
   @override
@@ -249,7 +252,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
           : ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),
-              itemCount: (_peers != null ? _peers.length : 0),
+              itemCount: _peers.length,
               itemBuilder: (context, i) {
                 return _buildRow(context, _peers[i]);
               }),
